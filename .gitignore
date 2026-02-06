@@ -1,1 +1,5 @@
 .trigger
+node_modules
+.env
+SPEC.md
+dist
