@@ -2,7 +2,55 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { NormalizedChannel, ClassificationResult } from "./schema";
 
 // ============================================================
-// Gemini AI Classification (simple - just send to LLM)
+// Rate limiting helpers
+// ============================================================
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Global rate limiter: minimum 1 second between Gemini calls
+let lastCallTime = 0;
+const MIN_DELAY_MS = 1500; // 1.5 seconds between calls
+
+async function rateLimitedCall<T>(fn: () => Promise<T>): Promise<T> {
+    const now = Date.now();
+    const timeSinceLastCall = now - lastCallTime;
+
+    if (timeSinceLastCall < MIN_DELAY_MS) {
+        await sleep(MIN_DELAY_MS - timeSinceLastCall);
+    }
+
+    lastCallTime = Date.now();
+    return fn();
+}
+
+// Retry with exponential backoff
+async function retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    maxRetries = 3,
+    baseDelay = 2000
+): Promise<T> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            return await rateLimitedCall(fn);
+        } catch (error: any) {
+            const isRateLimit = error?.status === 429 ||
+                error?.message?.includes("429") ||
+                error?.message?.includes("quota");
+
+            if (isRateLimit && attempt < maxRetries) {
+                const delay = baseDelay * Math.pow(2, attempt); // 2s, 4s, 8s
+                console.log(`Rate limited, retrying in ${delay}ms...`);
+                await sleep(delay);
+                continue;
+            }
+            throw error;
+        }
+    }
+    throw new Error("Max retries exceeded");
+}
+
+// ============================================================
+// Gemini AI Classification
 // ============================================================
 
 function getGeminiClient() {
@@ -51,7 +99,7 @@ Respond with ONLY valid JSON:
 }`;
 
     try {
-        const result = await model.generateContent(prompt);
+        const result = await retryWithBackoff(() => model.generateContent(prompt));
         const text = result.response.text();
 
         // Parse JSON from response
