@@ -7,9 +7,9 @@ import type { NormalizedChannel, ClassificationResult } from "./schema";
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Global rate limiter: minimum 1 second between Gemini calls
+// Global rate limiter: minimum 4 seconds between Gemini calls
 let lastCallTime = 0;
-const MIN_DELAY_MS = 1500; // 1.5 seconds between calls
+const MIN_DELAY_MS = 4000; // 4 seconds between calls for free tier
 
 async function rateLimitedCall<T>(fn: () => Promise<T>): Promise<T> {
     const now = Date.now();

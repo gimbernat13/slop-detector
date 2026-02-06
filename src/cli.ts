@@ -248,16 +248,24 @@ async function main() {
     let mode: string;
     let input: string;
     let count: number;
+    let minSubs = 0;
+    let maxSubs = Infinity;
 
     if (args.length >= 2) {
         mode = args[0];
         input = args[1];
         count = parseInt(args[2]) || 10;
+        // Optional: --min-subs=1000 --max-subs=1000000
+        for (const arg of args) {
+            if (arg.startsWith("--min-subs=")) minSubs = parseInt(arg.split("=")[1]) || 0;
+            if (arg.startsWith("--max-subs=")) maxSubs = parseInt(arg.split("=")[1]) || Infinity;
+        }
 
         console.log(boxen(
             `${chalk.cyan("Mode:")} ${chalk.white.bold(mode)}\n` +
             `${chalk.cyan("Input:")} ${chalk.white.bold(input)}\n` +
-            `${chalk.cyan("Max channels:")} ${chalk.white.bold(count)}`,
+            `${chalk.cyan("Max channels:")} ${chalk.white.bold(count)}\n` +
+            `${chalk.cyan("Subs filter:")} ${chalk.white.bold(minSubs.toLocaleString())} - ${chalk.white.bold(maxSubs === Infinity ? "∞" : maxSubs.toLocaleString())}`,
             { padding: { left: 2, right: 2, top: 0, bottom: 0 }, borderStyle: "round", borderColor: "gray" }
         ));
         console.log();
@@ -313,10 +321,44 @@ async function main() {
                 type: "number",
                 name: "count",
                 message: chalk.cyan("📊 How many channels to analyze?"),
-                default: 5,
+                default: 10,
             },
         ]);
         count = countAnswer.count;
+
+        // Filter options
+        const filterAnswer = await inquirer.prompt([
+            {
+                type: "list",
+                name: "filter",
+                message: chalk.cyan("🎚️  Filter by subscriber count?"),
+                choices: [
+                    { name: `${chalk.gray("No filter")} — Analyze all channels`, value: "none" },
+                    { name: `${chalk.yellow("Small")} — Under 10K subscribers`, value: "small" },
+                    { name: `${chalk.blue("Medium")} — 10K - 100K subscribers`, value: "medium" },
+                    { name: `${chalk.green("Large")} — 100K - 1M subscribers`, value: "large" },
+                    { name: `${chalk.magenta("Huge")} — Over 1M subscribers`, value: "huge" },
+                    { name: `${chalk.cyan("Custom")} — Set custom range`, value: "custom" },
+                ],
+            },
+        ]);
+
+        if (filterAnswer.filter === "small") {
+            minSubs = 0; maxSubs = 10000;
+        } else if (filterAnswer.filter === "medium") {
+            minSubs = 10000; maxSubs = 100000;
+        } else if (filterAnswer.filter === "large") {
+            minSubs = 100000; maxSubs = 1000000;
+        } else if (filterAnswer.filter === "huge") {
+            minSubs = 1000000; maxSubs = Infinity;
+        } else if (filterAnswer.filter === "custom") {
+            const customAnswer = await inquirer.prompt([
+                { type: "number", name: "minSubs", message: chalk.cyan("Min subscribers:"), default: 0 },
+                { type: "number", name: "maxSubs", message: chalk.cyan("Max subscribers:"), default: 1000000 },
+            ]);
+            minSubs = customAnswer.minSubs;
+            maxSubs = customAnswer.maxSubs;
+        }
         console.log();
     }
 
@@ -377,8 +419,19 @@ async function main() {
     const metaSpinner = ora({ text: chalk.yellow("  Fetching channel metadata..."), spinner: "dots" }).start();
     let channels;
     try {
-        channels = await fetchChannelMetadata(channelIds);
-        metaSpinner.succeed(chalk.green(`  📡 Loaded ${channels.length} channels`));
+        const allChannels = await fetchChannelMetadata(channelIds);
+
+        // Apply subscriber filter
+        channels = allChannels.filter((ch: any) => {
+            const subs = parseInt(ch.statistics?.subscriberCount || "0");
+            return subs >= minSubs && subs <= maxSubs;
+        });
+
+        if (channels.length < allChannels.length) {
+            metaSpinner.succeed(chalk.green(`  📡 Loaded ${allChannels.length} channels, ${chalk.yellow(channels.length)} after filter`));
+        } else {
+            metaSpinner.succeed(chalk.green(`  📡 Loaded ${channels.length} channels`));
+        }
     } catch (error) {
         metaSpinner.fail(chalk.red("  ❌ Metadata fetch failed"));
         process.exit(1);
