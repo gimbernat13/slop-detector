@@ -4,12 +4,16 @@ import ora from "ora";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import Table from "cli-table3";
+import cliProgress from "cli-progress";
+import gradient from "gradient-string";
+import figlet from "figlet";
+import boxen from "boxen";
 import { config } from "dotenv";
 
 // Load env vars
 config();
 
-// Import lib modules directly (no Trigger.dev API needed)
+// Import lib modules directly
 import { fetchChannelMetadata, fetchRecentVideos } from "./trigger/lib/youtube";
 import { normalizeChannel } from "./trigger/lib/schema";
 import { classifyChannel } from "./trigger/lib/classifier";
@@ -18,28 +22,41 @@ import { insertClassification, initializeSchema } from "./trigger/lib/db";
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
+// Custom gradient theme
+const coolGradient = gradient(["#00d4ff", "#9333ea", "#ff0080"]);
+const slopGradient = gradient(["#ff0000", "#ff6600", "#ffcc00"]);
+const okGradient = gradient(["#00ff00", "#00cc00", "#009900"]);
+
 // ============================================================
-// Banner
+// Banner - ASCII Art with Gradient
 // ============================================================
 
 function printBanner() {
-    console.log(chalk.cyan.bold(`
-╔═══════════════════════════════════════════════════════════╗
-║                                                           ║
-║   🔍  ${chalk.yellow.bold("SLOP DETECTOR")}  🔍                                ║
-║                                                           ║
-║   AI-Powered YouTube Spam Channel Detector                ║
-║   Built with Trigger.dev + Gemini AI                      ║
-║                                                           ║
-╚═══════════════════════════════════════════════════════════╝
-`));
+    console.clear();
+
+    const title = figlet.textSync("SLOP DETECTOR", {
+        font: "Small",
+        horizontalLayout: "default",
+    });
+
+    console.log("\n" + coolGradient(title));
+
+    console.log(boxen(
+        chalk.white("🔍 AI-Powered YouTube Spam Channel Detector\n") +
+        chalk.gray("   Built with Trigger.dev + Gemini AI"),
+        {
+            padding: 1,
+            margin: { top: 0, bottom: 1, left: 2, right: 2 },
+            borderStyle: "round",
+            borderColor: "cyan",
+        }
+    ));
 }
 
 // ============================================================
 // YouTube Search Functions
 // ============================================================
 
-// Search for channels by keyword
 async function searchChannelsByKeyword(keyword: string, maxResults = 20): Promise<string[]> {
     const url = new URL(`${YOUTUBE_API_BASE}/search`);
     url.searchParams.set("part", "snippet");
@@ -55,7 +72,6 @@ async function searchChannelsByKeyword(keyword: string, maxResults = 20): Promis
     return (data.items || []).map((item: any) => item.snippet.channelId);
 }
 
-// Search for videos by keyword - returns unique channel IDs
 async function searchVideosByKeyword(keyword: string, maxResults = 50): Promise<string[]> {
     const url = new URL(`${YOUTUBE_API_BASE}/search`);
     url.searchParams.set("part", "snippet");
@@ -69,30 +85,19 @@ async function searchVideosByKeyword(keyword: string, maxResults = 50): Promise<
 
     const data = await response.json();
     const channelIds = (data.items || []).map((item: any) => item.snippet.channelId);
-    return [...new Set(channelIds)] as string[]; // Dedupe
+    return [...new Set(channelIds)] as string[];
 }
 
-// Get channel ID from URL or handle
 function parseChannelInput(input: string): string | null {
-    // Handle format: @username
-    if (input.startsWith("@")) {
-        return input; // Will need to resolve later
-    }
-    // Channel ID: UC...
-    if (input.startsWith("UC") && input.length === 24) {
-        return input;
-    }
-    // URL format: youtube.com/channel/UC...
+    if (input.startsWith("@")) return input;
+    if (input.startsWith("UC") && input.length === 24) return input;
     const channelMatch = input.match(/youtube\.com\/channel\/(UC[a-zA-Z0-9_-]{22})/);
     if (channelMatch) return channelMatch[1];
-    // URL format: youtube.com/@handle
     const handleMatch = input.match(/youtube\.com\/@([a-zA-Z0-9_-]+)/);
     if (handleMatch) return `@${handleMatch[1]}`;
-
     return null;
 }
 
-// Resolve @handle to channel ID
 async function resolveHandle(handle: string): Promise<string | null> {
     const url = new URL(`${YOUTUBE_API_BASE}/search`);
     url.searchParams.set("part", "snippet");
@@ -105,23 +110,16 @@ async function resolveHandle(handle: string): Promise<string | null> {
     if (!response.ok) return null;
 
     const data = await response.json();
-    if (data.items && data.items.length > 0) {
-        return data.items[0].snippet.channelId;
-    }
-    return null;
+    return data.items?.[0]?.snippet?.channelId || null;
 }
 
-// Snowball: get a channel's videos, then find similar video titles
 async function snowballFromChannel(channelId: string, maxChannels = 20): Promise<string[]> {
-    // Get channel's recent videos
     const videos = await fetchRecentVideos(channelId, 5);
     if (videos.length === 0) return [channelId];
 
-    // Search for similar videos using the channel's video titles
     const allChannelIds = new Set<string>([channelId]);
 
     for (const videoTitle of videos.slice(0, 3)) {
-        // Extract key terms from title
         const searchTerms = videoTitle
             .replace(/[^\w\s]/g, "")
             .split(" ")
@@ -141,7 +139,7 @@ async function snowballFromChannel(channelId: string, maxChannels = 20): Promise
 }
 
 // ============================================================
-// Display Results
+// Display Results with Style
 // ============================================================
 
 interface ClassificationResult {
@@ -153,58 +151,74 @@ interface ClassificationResult {
 }
 
 function displayResults(results: ClassificationResult[]) {
-    console.log("\n");
-    console.log(chalk.cyan.bold("═══════════════════════════════════════════════════════════"));
-    console.log(chalk.cyan.bold("                    📊 RESULTS                              "));
-    console.log(chalk.cyan.bold("═══════════════════════════════════════════════════════════"));
-    console.log();
-
-    // Summary
     const slop = results.filter(r => r.classification === "SLOP").length;
     const suspicious = results.filter(r => r.classification === "SUSPICIOUS").length;
     const okay = results.filter(r => r.classification === "OKAY").length;
 
-    console.log(chalk.white.bold("  📈 Summary:"));
-    console.log(`     Total Analyzed: ${chalk.cyan(results.length)}`);
-    console.log(`     ${chalk.red("🚨 SLOP:")} ${chalk.red.bold(slop)}`);
-    console.log(`     ${chalk.yellow("⚠️  SUSPICIOUS:")} ${chalk.yellow.bold(suspicious)}`);
-    console.log(`     ${chalk.green("✅ OKAY:")} ${chalk.green.bold(okay)}`);
-    console.log();
+    console.log("\n");
+
+    // Summary box
+    const summaryText = [
+        `${chalk.bold("📊 Analysis Complete")}`,
+        "",
+        `   Total Analyzed: ${chalk.cyan.bold(results.length)}`,
+        `   ${slopGradient("🚨 SLOP:")} ${chalk.red.bold(slop)}`,
+        `   ${chalk.yellow("⚠️  SUSPICIOUS:")} ${chalk.yellow.bold(suspicious)}`,
+        `   ${okGradient("✅ OKAY:")} ${chalk.green.bold(okay)}`,
+    ].join("\n");
+
+    console.log(boxen(summaryText, {
+        padding: 1,
+        margin: { top: 0, bottom: 1, left: 2, right: 2 },
+        borderStyle: "double",
+        borderColor: slop > 0 ? "red" : suspicious > 0 ? "yellow" : "green",
+        title: "Results",
+        titleAlignment: "center",
+    }));
 
     // Results table
     const table = new Table({
         head: [
-            chalk.cyan("Channel"),
-            chalk.cyan("Classification"),
-            chalk.cyan("Type"),
-            chalk.cyan("Confidence"),
+            chalk.cyan.bold("Channel"),
+            chalk.cyan.bold("Status"),
+            chalk.cyan.bold("Type"),
+            chalk.cyan.bold("Conf."),
         ],
-        colWidths: [30, 16, 18, 12],
-        style: { head: [], border: [] },
+        colWidths: [32, 18, 16, 8],
+        style: {
+            head: [],
+            border: ["gray"],
+        },
+        chars: {
+            "top": "─", "top-mid": "┬", "top-left": "╭", "top-right": "╮",
+            "bottom": "─", "bottom-mid": "┴", "bottom-left": "╰", "bottom-right": "╯",
+            "left": "│", "left-mid": "├", "mid": "─", "mid-mid": "┼",
+            "right": "│", "right-mid": "┤", "middle": "│"
+        },
     });
 
     for (const result of results) {
-        const classification = result.classification === "SLOP"
-            ? chalk.red.bold("🚨 SLOP")
+        const status = result.classification === "SLOP"
+            ? chalk.bgRed.white.bold(" SLOP ")
             : result.classification === "SUSPICIOUS"
-                ? chalk.yellow("⚠️  SUSPICIOUS")
-                : chalk.green("✅ OKAY");
+                ? chalk.bgYellow.black(" SUSPICIOUS ")
+                : chalk.bgGreen.white(" OKAY ");
 
         const slopType = result.slopType
             ? chalk.magenta(result.slopType)
-            : chalk.gray("-");
+            : chalk.gray("—");
 
-        const confidence = result.confidence >= 80
+        const conf = result.confidence >= 80
             ? chalk.red.bold(`${result.confidence}%`)
             : result.confidence >= 50
                 ? chalk.yellow(`${result.confidence}%`)
                 : chalk.gray(`${result.confidence}%`);
 
         table.push([
-            result.title.slice(0, 28),
-            classification,
+            result.title.slice(0, 30),
+            status,
             slopType,
-            confidence,
+            conf,
         ]);
     }
 
@@ -221,11 +235,11 @@ async function main() {
 
     // Check env vars
     if (!YOUTUBE_API_KEY) {
-        console.log(chalk.red("❌ YOUTUBE_API_KEY not set in .env"));
+        console.log(chalk.red("  ❌ YOUTUBE_API_KEY not set in .env\n"));
         process.exit(1);
     }
     if (!process.env.GEMINI_API_KEY) {
-        console.log(chalk.red("❌ GEMINI_API_KEY not set in .env"));
+        console.log(chalk.red("  ❌ GEMINI_API_KEY not set in .env\n"));
         process.exit(1);
     }
 
@@ -236,25 +250,37 @@ async function main() {
     let count: number;
 
     if (args.length >= 2) {
-        // Non-interactive: npx tsx src/cli.ts snowball @ElGuauXD 10
         mode = args[0];
         input = args[1];
         count = parseInt(args[2]) || 10;
-        console.log(chalk.cyan(`🎯 Mode: ${mode}`));
-        console.log(chalk.cyan(`🔍 Input: "${input}"`));
-        console.log(chalk.cyan(`📊 Max channels: ${count}`));
+
+        console.log(boxen(
+            `${chalk.cyan("Mode:")} ${chalk.white.bold(mode)}\n` +
+            `${chalk.cyan("Input:")} ${chalk.white.bold(input)}\n` +
+            `${chalk.cyan("Max channels:")} ${chalk.white.bold(count)}`,
+            { padding: { left: 2, right: 2, top: 0, bottom: 0 }, borderStyle: "round", borderColor: "gray" }
+        ));
         console.log();
     } else {
-        // Interactive mode
+        // Interactive mode with nice prompts
         const modeAnswer = await inquirer.prompt([
             {
                 type: "list",
                 name: "mode",
-                message: chalk.cyan("🎯 How do you want to find channels?"),
+                message: chalk.cyan.bold("🎯 Select discovery mode:"),
                 choices: [
-                    { name: "🔍 Search by keywords (e.g. 'lofi hip hop 24/7')", value: "search" },
-                    { name: "❄️  Snowball from slop channel (find related channels)", value: "snowball" },
-                    { name: "📹 Search videos (finds more unique channels)", value: "videos" },
+                    {
+                        name: `${chalk.green("❄️  Snowball")} ${chalk.gray("— Find related channels from a seed")}`,
+                        value: "snowball"
+                    },
+                    {
+                        name: `${chalk.blue("📹 Video Search")} ${chalk.gray("— Search videos, get unique channels")}`,
+                        value: "videos"
+                    },
+                    {
+                        name: `${chalk.yellow("🔍 Channel Search")} ${chalk.gray("— Direct channel keyword search")}`,
+                        value: "search"
+                    },
                 ],
             },
         ]);
@@ -276,7 +302,7 @@ async function main() {
                     type: "input",
                     name: "input",
                     message: chalk.cyan("🔍 Enter search keywords:"),
-                    default: mode === "videos" ? "lofi beats 24/7 live stream" : "lofi beats 24/7",
+                    default: mode === "videos" ? "lofi beats 24/7 live stream" : "lofi hip hop",
                 },
             ]);
             input = keywordAnswer.input;
@@ -287,135 +313,93 @@ async function main() {
                 type: "number",
                 name: "count",
                 message: chalk.cyan("📊 How many channels to analyze?"),
-                default: 10,
+                default: 5,
             },
         ]);
         count = countAnswer.count;
         console.log();
     }
 
-    // Step 1: Get channel IDs based on mode
+    // Progress bar setup
+    const progressBar = new cliProgress.SingleBar({
+        format: `  ${chalk.cyan("{bar}")} ${chalk.gray("|")} {percentage}% ${chalk.gray("|")} {value}/{total} ${chalk.gray("|")} {task}`,
+        barCompleteChar: "█",
+        barIncompleteChar: "░",
+        hideCursor: true,
+    }, cliProgress.Presets.shades_grey);
+
+    // Step 1: Get channel IDs
     let channelIds: string[] = [];
+    const discoverySpinner = ora({
+        text: chalk.yellow(`  Discovering channels...`),
+        spinner: "dots12",
+    }).start();
 
-    if (mode === "snowball") {
-        const snowballSpinner = ora({
-            text: chalk.yellow("❄️  Snowballing from seed channel..."),
-            spinner: "dots12",
-        }).start();
-
-        try {
-            // Parse and resolve channel input
-            let channelId = parseChannelInput(input);
-            if (!channelId) {
-                // Try as direct input
-                channelId = input.startsWith("@") ? input : null;
-            }
+    try {
+        if (mode === "snowball") {
+            discoverySpinner.text = chalk.yellow("  Resolving seed channel...");
+            let channelId = parseChannelInput(input) || (input.startsWith("@") ? input : null);
 
             if (channelId?.startsWith("@")) {
-                snowballSpinner.text = chalk.yellow(`🔍 Resolving ${channelId}...`);
                 channelId = await resolveHandle(channelId);
             }
 
-            if (!channelId) {
-                throw new Error("Could not resolve channel");
-            }
+            if (!channelId) throw new Error("Could not resolve channel");
 
-            snowballSpinner.text = chalk.yellow(`❄️  Finding related channels from ${channelId}...`);
+            discoverySpinner.text = chalk.yellow("  Snowballing to find related channels...");
             channelIds = await snowballFromChannel(channelId, count);
-            snowballSpinner.succeed(chalk.green(`✅ Found ${channelIds.length} channels via snowball`));
-        } catch (error) {
-            snowballSpinner.fail(chalk.red("❌ Snowball failed"));
-            console.error(error);
-            process.exit(1);
-        }
-    } else if (mode === "videos") {
-        const searchSpinner = ora({
-            text: chalk.yellow("📹 Searching for videos..."),
-            spinner: "dots12",
-        }).start();
-
-        try {
+            discoverySpinner.succeed(chalk.green(`  ❄️  Found ${channelIds.length} related channels`));
+        } else if (mode === "videos") {
             channelIds = await searchVideosByKeyword(input, count * 3);
             channelIds = channelIds.slice(0, count);
-            searchSpinner.succeed(chalk.green(`✅ Found ${channelIds.length} unique channels from videos`));
-        } catch (error) {
-            searchSpinner.fail(chalk.red("❌ Video search failed"));
-            console.error(error);
-            process.exit(1);
-        }
-    } else {
-        // Default: search channels
-        const searchSpinner = ora({
-            text: chalk.yellow("🔍 Searching YouTube for channels..."),
-            spinner: "dots12",
-        }).start();
-
-        try {
+            discoverySpinner.succeed(chalk.green(`  📹 Found ${channelIds.length} channels from video search`));
+        } else {
             channelIds = await searchChannelsByKeyword(input, count);
-            searchSpinner.succeed(chalk.green(`✅ Found ${channelIds.length} channels`));
-        } catch (error) {
-            searchSpinner.fail(chalk.red("❌ Failed to search YouTube"));
-            console.error(error);
-            process.exit(1);
+            discoverySpinner.succeed(chalk.green(`  🔍 Found ${channelIds.length} channels`));
         }
+    } catch (error) {
+        discoverySpinner.fail(chalk.red("  ❌ Discovery failed"));
+        console.error(error);
+        process.exit(1);
     }
 
     // Step 2: Initialize DB
-    const dbSpinner = ora({
-        text: chalk.yellow("🗄️  Initializing database..."),
-        spinner: "dots12",
-    }).start();
-
+    const dbSpinner = ora({ text: chalk.yellow("  Initializing database..."), spinner: "dots" }).start();
     try {
         await initializeSchema();
-        dbSpinner.succeed(chalk.green("✅ Database ready"));
+        dbSpinner.succeed(chalk.green("  📦 Database ready"));
     } catch (error) {
-        dbSpinner.fail(chalk.red("❌ Database error"));
-        console.error(error);
+        dbSpinner.fail(chalk.red("  ❌ Database error"));
         process.exit(1);
     }
 
-    // Step 3: Fetch channel metadata
-    const metaSpinner = ora({
-        text: chalk.yellow("📡 Fetching channel metadata..."),
-        spinner: "dots12",
-    }).start();
-
+    // Step 3: Fetch metadata
+    const metaSpinner = ora({ text: chalk.yellow("  Fetching channel metadata..."), spinner: "dots" }).start();
     let channels;
     try {
         channels = await fetchChannelMetadata(channelIds);
-        metaSpinner.succeed(chalk.green(`✅ Fetched ${channels.length} channels`));
+        metaSpinner.succeed(chalk.green(`  📡 Loaded ${channels.length} channels`));
     } catch (error) {
-        metaSpinner.fail(chalk.red("❌ Failed to fetch metadata"));
-        console.error(error);
+        metaSpinner.fail(chalk.red("  ❌ Metadata fetch failed"));
         process.exit(1);
     }
 
-    // Step 4: Analyze each channel
+    // Step 4: Analyze with progress bar
     console.log();
-    console.log(chalk.cyan.bold("🤖 Analyzing channels with Gemini AI..."));
-    console.log();
+    console.log(chalk.cyan.bold("  🤖 Analyzing with Gemini AI...\n"));
+
+    progressBar.start(channels.length, 0, { task: "Starting..." });
 
     const results: ClassificationResult[] = [];
 
     for (let i = 0; i < channels.length; i++) {
         const channel = channels[i];
-        const spinner = ora({
-            text: chalk.yellow(`  [${i + 1}/${channels.length}] ${channel.snippet.title}`),
-            spinner: "dots",
-        }).start();
+        progressBar.update(i, { task: channel.snippet.title.slice(0, 30) });
 
         try {
-            // Fetch recent videos
             const recentVideos = await fetchRecentVideos(channel.id, 10);
-
-            // Normalize
             const normalized = normalizeChannel(channel, recentVideos);
-
-            // Classify with AI
             const classification = await classifyChannel(normalized);
-
-            // Store in DB
             await insertClassification(classification);
 
             results.push({
@@ -426,20 +410,30 @@ async function main() {
                 confidence: classification.confidence,
             });
 
-            const emoji = classification.classification === "SLOP" ? "🚨"
-                : classification.classification === "SUSPICIOUS" ? "⚠️" : "✅";
-
-            spinner.succeed(chalk.gray(`  [${i + 1}/${channels.length}] ${channel.snippet.title} → ${emoji} ${classification.classification}`));
+            progressBar.update(i + 1, {
+                task: `${channel.snippet.title.slice(0, 20)} → ${classification.classification}`
+            });
         } catch (error) {
-            spinner.fail(chalk.red(`  [${i + 1}/${channels.length}] ${channel.snippet.title} → ❌ Error`));
-            console.error(error);
+            progressBar.update(i + 1, { task: `Error: ${channel.snippet.title.slice(0, 20)}` });
         }
     }
+
+    progressBar.stop();
 
     // Display results
     displayResults(results);
 
-    console.log(chalk.cyan.bold("Thanks for using Slop Detector! 🎉\n"));
+    // Final message
+    console.log(boxen(
+        coolGradient("Thanks for using Slop Detector! 🎉"),
+        {
+            padding: { left: 2, right: 2, top: 0, bottom: 0 },
+            borderStyle: "round",
+            borderColor: "cyan",
+            textAlignment: "center",
+        }
+    ));
+    console.log();
 }
 
 main().catch(console.error);
