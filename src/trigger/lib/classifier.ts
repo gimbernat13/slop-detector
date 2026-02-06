@@ -105,8 +105,9 @@ export function ruleBasedClassify(channel: NormalizedChannel): ClassificationRes
         };
     }
 
-    // OBVIOUS SAFE
-    if (channel.velocity < 0.5 && channel.viewsPerSub > 50 && slopScore < 20) {
+    // OBVIOUS SAFE - very strict now, most channels go to AI
+    // Only mark OKAY if: very low velocity + old account + high engagement + no spam signals
+    if (channel.velocity < 0.3 && channel.ageInDays > 365 && channel.viewsPerSub > 50 && slopScore === 0) {
         return {
             channelId: channel.channelId,
             title: channel.title,
@@ -121,7 +122,7 @@ export function ruleBasedClassify(channel: NormalizedChannel): ClassificationRes
                 viewsPerSub: channel.viewsPerSub,
                 videoCount: channel.videoCount,
             },
-            reasons: ["Low velocity, healthy engagement"],
+            reasons: ["Established channel with low velocity and healthy engagement"],
             recentVideos: channel.recentVideos,
         };
     }
