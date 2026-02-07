@@ -92,18 +92,12 @@ export const ingestChannel = task({
                 if (keywords.length === 0 && candidateQueue.size === 0) {
                     console.log(`Fetching trending channels (Page: ${trendingToken ? 'Next' : 'First'})...`);
                     try {
-                        const trendingRes = await fetchTrendingChannelIds(undefined, 50); // Trending doesn't always support pagination well via this wrapper? 
-                        // Note: Our youtube.ts update allows pagination for search but fetchTrendingChannelIds implementation 
-                        // usually returns unique IDs. If we didn't update `fetchTrendingChannelIds` logic to accept pageToken, 
-                        // we might get stuck loop.
-                        // Wait, I updated `fetchTrendingChannelIds` return signature but NOT the input arguments to accept `pageToken` in the previous step?
-                        // Let's check... I did NOT add pageToken to input args of fetchTrendingChannelIds in the previous step, only return type.
-                        // I will fix this in a subsequent step if needed, or just rely on snowballs.
+                        const trendingRes = await fetchTrendingChannelIds(undefined, 50, trendingToken);
 
                         trendingRes.ids.forEach(id => {
                             if (!visitedIds.has(id)) candidateQueue.add(id);
                         });
-                        // trendingToken = trendingRes.nextPageToken; 
+                        trendingToken = trendingRes.nextPageToken;
                     } catch (e) {
                         console.error("Trending fetch failed:", e);
                     }

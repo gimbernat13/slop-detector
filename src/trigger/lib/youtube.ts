@@ -222,7 +222,7 @@ export async function fetchTrendingKeywords(categoryId?: string, maxResults = 10
     ).filter((t: string) => t.length > 0);
 }
 
-export async function fetchTrendingChannelIds(categoryId?: string, maxResults = 50): Promise<{ ids: string[]; nextPageToken?: string }> {
+export async function fetchTrendingChannelIds(categoryId?: string, maxResults = 50, pageToken?: string): Promise<{ ids: string[]; nextPageToken?: string }> {
     const url = new URL(`${YOUTUBE_API_BASE}/videos`);
     url.searchParams.set("part", "snippet");
     url.searchParams.set("chart", "mostPopular");
@@ -232,6 +232,9 @@ export async function fetchTrendingChannelIds(categoryId?: string, maxResults = 
     }
     url.searchParams.set("maxResults", String(maxResults));
     url.searchParams.set("key", getApiKey());
+    if (pageToken) {
+        url.searchParams.set("pageToken", pageToken);
+    }
 
     const response = await fetch(url.toString());
     if (!response.ok) {
