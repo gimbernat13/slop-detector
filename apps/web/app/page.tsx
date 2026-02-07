@@ -1,13 +1,29 @@
 import { getChannels, getStats, ChannelTable, StatsDonut } from "@/features/review";
+import { ChannelTabs } from "@/features/review/components/ChannelTabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Classification } from "@slop-detector/shared";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+interface PageProps {
+  searchParams: Promise<{ filter?: string }>;
+}
+
+export default async function DashboardPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const filter = params.filter as Classification | undefined;
+
   const [channels, stats] = await Promise.all([
-    getChannels(),
+    getChannels(filter),
     getStats(),
   ]);
+
+  const counts = {
+    all: stats.slop + stats.suspicious + stats.okay,
+    slop: stats.slop,
+    suspicious: stats.suspicious,
+    okay: stats.okay,
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
@@ -84,6 +100,7 @@ export default async function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Channels for Review</CardTitle>
+                <ChannelTabs counts={counts} />
               </CardHeader>
               <CardContent>
                 <ChannelTable channels={channels} />

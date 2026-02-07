@@ -1,5 +1,6 @@
 // Components
 export { ChannelTable } from "./components/ChannelTable";
+export { ChannelTabs } from "./components/ChannelTabs";
 export { ClassificationBadge, ReviewStatusBadge } from "./components/ClassificationBadge";
 export { ReviewActions } from "./components/ReviewActions";
 export { StatsDonut } from "./components/StatsDonut";
