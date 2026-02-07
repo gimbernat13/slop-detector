@@ -71,12 +71,18 @@ export const NormalizedChannelSchema = z.object({
     viewCount: z.number(),
 
     // Calculated metrics
-    velocity: z.number(), // videos per day
+    velocity: z.number(), // videos per day (lifetime)
+    recentVelocity: z.number(), // videos per day (recent)
     ageInDays: z.number(),
     viewsPerSub: z.number(),
 
     // Recent videos for NLP
-    recentVideos: z.array(z.string()),
+    recentVideos: z.array(z.object({
+        id: z.string(),
+        title: z.string(),
+        publishedAt: z.string(),
+        viewCount: z.string().optional(), // Optional since we might not always fetch it deep
+    })),
 });
 
 // ============================================================

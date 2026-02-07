@@ -47,13 +47,14 @@ export async function fetchChannelMetadata(channelIds: string[]): Promise<YouTub
 const PlaylistItemSchema = z.object({
     snippet: z.object({
         title: z.string(),
+        publishedAt: z.string(),
         resourceId: z.object({
             videoId: z.string(),
         }),
     }),
 });
 
-export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 10): Promise<{ id: string, title: string }[]> {
+export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 10): Promise<{ id: string, title: string, publishedAt: string }[]> {
     if (!uploadsPlaylistId) return [];
 
     const url = new URL(`${YOUTUBE_API_BASE}/playlistItems`);
@@ -71,18 +72,19 @@ export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 
     const data = await response.json() as any;
     const items = data.items || [];
 
-    // Extract video titles
+    // Extract video data
     return items.map((item: unknown) => {
         try {
             const parsed = PlaylistItemSchema.parse(item);
             return {
                 id: parsed.snippet.resourceId.videoId,
                 title: parsed.snippet.title,
+                publishedAt: parsed.snippet.publishedAt,
             };
         } catch {
-            return { id: "", title: "Untitled" }; // Filtered out later
+            return { id: "", title: "Untitled", publishedAt: "" }; // Filtered out later
         }
-    }).filter((v: { id: string; title: string }) => v.id !== "");
+    }).filter((v: { id: string; title: string, publishedAt: string }) => v.id !== "");
 }
 
 // ============================================================

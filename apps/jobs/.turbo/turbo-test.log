@@ -460,11 +460,480 @@ rough to AI) for ambiguous cases
 [31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules
 [1m[7m[31m FAIL [39m[27m[22m[31m Tests failed. Watching for file changes...[39m
        [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+[?25l       [    [90m 58| [39m        })[33m;[39m
+    [90m 59| [39m        [35mconst[39m result [33m=[39m [34mc[39m…
+    [90m 60| [39m        [34mexpect[39m(result)[33m.[39mn…
+    [90m   | [39m                           [31m^[39m
+    [90m 61| [39m        [34mexpect[39m(result[33m?.[39mc…
+    [90m 62| [39m        [34mexpect[39m(result[33m?.[39mr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 12:48:45
+[2m   Duration [22m 69ms
+
+
+[1m[7m[31m FAIL [39m[27m[22m[31m Tests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+[?25l       [34mrerun x7[39m
+[?25l[2K[1A[2K[G       [90mrerun x7[39m
+[?25l[2K[1A[2K[G       [2m[90mrerun x7[39m[22m
+[2K[1A[2K[G[3Jc
+[7m[1m[34m RERUN [39m[22m[27m[2m src/trigger/lib/classifier.ts[22m [34mx8[39m
+
+[?25l [90m·[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [90m·[39m classifyByRules[2m (5)[22m
+     [90m·[39m should classify high veloci
+ty (>10) as SLOP
+     [90m·[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [90m·[39m should classify low velocit
+y (<0.5) as OKAY
+     [90m·[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [90m·[39m should return null (fall th
+rough to AI) for ambiguous cases
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high veloci
+ty (>10) as SLOP
+     [32m✓[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [31m×[39m should classify low velocit
+y (<0.5) as OKAY
+     [31m×[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [32m✓[39m should return null (fall th
+rough to AI) for ambiguous cases
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifier[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high velocity (>10) as SLOP
+     [32m✓[39m should classify medium velocity (>5) with spam keywords as SLOP
+     [31m×[39m should classify low velocity (<0.5) as OKAY
+     [31m×[39m should classify high engagement (>50 views/sub) as OKAY
+     [32m✓[39m should return null (fall through to AI) for ambiguous cases
+
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 2 [27m[22m⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify low velocity (<0.5) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m47:28[22m[39m
+    [90m 45| [39m        [35mconst[39m channel [33m=[39m …
+    [90m 46| [39m        [35mconst[39m result [33m=[39m [34mc[39m…
+    [90m 47| [39m        [34mexpect[39m(result)[33m.[39mn…
+    [90m   | [39m                           [31m^[39m
+    [90m 48| [39m        [34mexpect[39m(result[33m?.[39mc…
+    [90m 49| [39m        [34mexpect[39m(result[33m?.[39mr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify high engagement (>50 views/sub) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m60:28[22m[39m
+    [90m 58| [39m        })[33m;[39m
+    [90m 59| [39m        [35mconst[39m result [33m=[39m [34mc[39m…
+    [90m 60| [39m        [34mexpect[39m(result)[33m.[39mn…
+    [90m   | [39m                           [31m^[39m
+    [90m 61| [39m        [34mexpect[39m(result[33m?.[39mc…
+    [90m 62| [39m        [34mexpect[39m(result[33m?.[39mr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 13:00:35
+[2m   Duration [22m 260ms
+
+
+[1m[7m[31m FAIL [39m[27m[22m[31m Tests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
 [?25l       [34mrerun x8[39m
 [?25l[2K[1A[2K[G       [90mrerun x8[39m
 [?25l[2K[1A[2K[G       [2m[90mrerun x8[39m[22m
 [2K[1A[2K[G[3Jc
-[7m[1m[34m RERUN [39m[22m[27m[2m package.json[22m [34mx9[39m
+[7m[1m[34m RERUN [39m[22m[27m[2m src/trigger/lib/classifier.ts[22m [34mx9[39m
+
+[?25l [90m·[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [90m·[39m classifyByRules[2m (5)[22m
+     [90m·[39m should classify high veloci
+ty (>10) as SLOP
+     [90m·[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [90m·[39m should classify low velocit
+y (<0.5) as OKAY
+     [90m·[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [90m·[39m should return null (fall th
+rough to AI) for ambiguous cases
+[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high veloci
+ty (>10) as SLOP
+     [32m✓[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [31m×[39m should classify low velocit
+y (<0.5) as OKAY
+     [31m×[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [32m✓[39m should return null (fall th
+rough to AI) for ambiguous cases
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifier[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high velocity (>10) as SLOP
+     [32m✓[39m should classify medium velocity (>5) with spam keywords as SLOP
+     [31m×[39m should classify low velocity (<0.5) as OKAY
+     [31m×[39m should classify high engagement (>50 views/sub) as OKAY
+     [32m✓[39m should return null (fall through to AI) for ambiguous cases
+
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 2 [27m[22m⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify low velocity (<0.5) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m60:28[22m[39m
+    [90m 58| [39m        })[33m;[39m
+    [90m 59| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
+    [90m 60| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
+    [90m   | [39m                           [31m^[39m
+    [90m 61| [39m        [34mexpect[39m(result[33m?.[39mclas…
+    [90m 62| [39m        [34mexpect[39m(result[33m?.[39mreas…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[3[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify high engagement (>50 views/sub) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m60:28[22m[39m
+    [90m 58| [39m        })[33m;[39m
+    [90m 59| [39m        [35mconst[39m result [33m=[39m [34mc[39m…
+    [90m 60| [39m        [34mexpect[39m(result)[33m.[39mn…
+    [90m   | [39m                           [31m^[39m
+    [90m 61| [39m        [34mexpect[39m(result[33m?.[39mc…
+    [90m 62| [39m        [34mexpect[39m(result[33m?.[39mr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 13:23:53
+[2m   Duration [22m 348ms
+
+
+[1m[7m[31m FAIL [39m[27m[22m[31m Tests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+[?25l       [34mrerun x9[39m
+[?25l[2K[1A[2K[G       [90mrerun x9[39m
+[2K[1A[2K[G[3Jc
+[7m[1m[34m RERUN [39m[22m[27m[2m src/trigger/lib/classifier.ts[22m [34mx10[39m
+
+[?25l [90m·[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [90m·[39m classifyByRules[2m (5)[22m
+     [90m·[39m should classify high veloci
+ty (>10) as SLOP
+     [90m·[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [90m·[39m should classify low velocit
+y (<0.5) as OKAY
+     [90m·[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [90m·[39m should return null (fall th
+rough to AI) for ambiguous cases
+[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high veloci
+ty (>10) as SLOP
+     [32m✓[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [31m×[39m should classify low velocit
+y (<0.5) as OKAY
+     [31m×[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [32m✓[39m should return null (fall th
+rough to AI) for ambiguous cases
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifier[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high velocity (>10) as SLOP
+     [32m✓[39m should classify medium velocity (>5) with spam keywords as SLOP
+     [31m×[39m should classify low velocity (<0.5) as OKAY
+     [31m×[39m should classify high engagement (>50 views/sub) as OKAY
+     [32m✓[39m should return null (fall through to AI) for ambiguous cases
+
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 2 [27m[22m⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify low velocity (<0.5) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m47:28[22m[39m
+    [90m 45| [39m        [35mconst[39m channel [33m=[39m …
+    [90m 46| [39m        [35mconst[39m result [33m=[39m [34mc[39m…
+    [90m 47| [39m        [34mexpect[39m(result)[33m.[39mn…
+    [90m   | [39m                           [31m^[39m
+    [90m 48| [39m        [34mexpect[39m(result[33m?.[39mc…
+    [90m 49| [39m        [34mexpect[39m(result[33m?.[39mr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify high engagement (>50 views/sub) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m60:28[22m[39m
+    [90m 58| [39m        })[33m;[39m
+    [90m 59| [39m        [35mconst[39m result [33m=[39m [34mc[39m…
+    [90m 60| [39m        [34mexpect[39m(result)[33m.[39mn…
+    [90m   | [39m                           [31m^[39m
+    [90m 61| [39m        [34mexpect[39m(result[33m?.[39mc…
+    [90m 62| [39m        [34mexpect[39m(result[33m?.[39mr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 13:23:55
+[2m   Duration [22m 103ms
+
+
+[1m[7m[31m FAIL [39m[27m[22m[31m Tests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+[?25l       [34mrerun x10[39m
+[?25l[2K[1A[2K[G       [90mrerun x10[39m
+[?25l[2K[1A[2K[G       [2m[90mrerun x10[39m[22m
+[2K[1A[2K[G[3Jc
+[7m[1m[34m RERUN [39m[22m[27m[2m src/trigger/lib/classifier.ts[22m [34mx11[39m
+
+[?25l [90m·[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [90m·[39m classifyByRules[2m (5)[22m
+     [90m·[39m should classify high veloci
+ty (>10) as SLOP
+     [90m·[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [90m·[39m should classify low velocit
+y (<0.5) as OKAY
+     [90m·[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [90m·[39m should return null (fall th
+rough to AI) for ambiguous cases
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high veloci
+ty (>10) as SLOP
+     [32m✓[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [31m×[39m should classify low velocit
+y (<0.5) as OKAY
+     [31m×[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [32m✓[39m should return null (fall th
+rough to AI) for ambiguous cases
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifier[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high velocity (>10) as SLOP
+     [32m✓[39m should classify medium velocity (>5) w    [90m 45| [39m        [35mconst[39m channel [33m=[39m [34mcre[39m…
+    [90m 46| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
+    [90m 47| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
+    [90m   | [39m                           [31m^[39m
+    [90m 48| [39m        [34mexpect[39m(result[33m?.[39mclas…
+    [90m 49| [39m        [34mexpect[39m(result[33m?.[39mreas…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [    [90m 45| [39m        [35mconst[39m channel [33m=[39m …
+    [90m 46| [39m        [35mconst[39m result [33m=[39m [34mc[39m…
+    [90m 47| [39m        [34mexpect[39m(result)[33m.[39mn…
+    [90m   | [39m                           [31m^[39m
+    [90m 48| [39m        [34mexpect[39m(result[33m?.[39mc…
+    [90m 49| [39m        [34mexpect[39m(result[33m?.[39mr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify high engagement (>50 views/sub) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m60:28[22m[39m
+    [90m 58| [39m        })[33m;[39m
+    [90m 59| [39m        [35mconst[39m result [33m=[39m [34mc[39m…
+    [90m 60| [39m        [34mexpect[39m(result)[33m.[39mn…
+    [90m   | [39m                           [31m^[39m
+    [90m 61| [39m        [34mexpect[39m(result[33m?.[39mc…
+    [90m 62| [39m        [34mexpect[39m(result[33m?.[39mr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 13:23:56
+[2m   Duration [22m 104ms
+
+
+[1m[7m[31m FAIL [39m[27m[22m[31m Tests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+[?25l       [34mrerun x11[39m
+[?25l[2K[1A[2K[G       [90mrerun x11[39m
+[?25l[2K[1A[2K[G       [2m[90mrerun x11[39m[22m
+[2K[1A[2K[G[3Jc
+[7m[1m[34m RERUN [39m[22m[27m[2m src/trigger/__tests__/classifier.test.ts[22m [34mx12[39m
+
+[?25l [90m·[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [90m·[39m classifyByRules[2m (5)[22m
+     [90m·[39m should classify high veloci
+ty (>10) as SLOP
+     [90m·[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [90m·[39m should classify low velocit
+y (<0.5) as OKAY
+     [90m·[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [90m·[39m should return null (fall th
+rough to AI) for ambiguous cases
+[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high veloci
+ty (>10) as SLOP
+     [32m✓[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [31m×[39m should classify low velocit
+y (<0.5) as OKAY
+     [31m×[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [32m✓[39m should return null (fall th
+rough to AI) for ambiguous cases
+[?25l[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifier[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high velocity (>10) as SLOP
+     [32m✓[39m should classify medium velocity (>5) with spam keywords as SLOP
+     [31m×[39m should classify low velocity (<0.5) as OKAY
+     [31m×[39m should classify high engagement (>50 views/sub) as OKAY
+     [32m✓[39m should return null (fall through to AI) for ambiguous cases
+
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 2 [27m[22m⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify low velocity (<0.5) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m48:28[22m[39m
+    [90m 46| [39m        [35mconst[39m channel [33m=[39m …
+    [90m 47| [39m        [35mconst[39m result [33m=[39m [34mc[39m…
+    [90m 48| [39m        [34mexpect[39m(result)[33m.[39mn…
+    [90m   | [39m                           [31m^[39m
+    [90m 49| [39m        [34mexpect[39m(result[33m?.[39mc…
+    [90m 50| [39m        [34mexpect[39m(result[33m?.[39mr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify high engagement (>50 views/sub) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m61:28[22m[39m
+    [90m 59| [39m        })[33m;[39m
+    [90m 60| [39m        [35mconst[39m result [33m=[39m [34mc[39m…
+    [90m 61| [39m        [34mexpect[39m(result)[33m.[39mn…
+    [90m   | [39m                           [31m^[39m
+    [90m 62| [39m        [34mexpect[39m(result[33m?.[39mc…
+    [90m 63| [39m        [34mexpect[39m(result[33m?.[39mr…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 13:24:10
+[2m   Duration [22m 74ms
+
+
+[1m[7m[31m FAIL [39m[27m[22m[31m Tests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+[?25l       [34mrerun x12[39m
+[?25l[2K[1A[2K[G       [90mrerun x12[39m
+[?25l[2K[1A[2K[G       [2m[90mrerun x12[39m[22m
+[2K[1A[2K[G[3Jc
+[7m[1m[34m RERUN [39m[22m[27m[2m src/trigger/lib/classifier.ts[22m [34mx13[39m
+
+[?25l [90m·[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [90m·[39m classifyByRules[2m (5)[22m
+     [90m·[39m should classify high veloci
+ty (>10) as SLOP
+     [90m·[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [90m·[39m should classify low velocit
+y (<0.5) as OKAY
+     [90m·[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [90m·[39m should return null (fall th
+rough to AI) for ambiguous cases
+[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifie
+r[2m.test.ts[22m[2m (5)[22m
+   [33m❯[39m classifyByRules[2m (5)[22m
+     [32m✓[39m should classify high veloci
+ty (>10) as SLOP
+     [32m✓[39m should classify medium velo
+city (>5) with spam keywords as SL
+OP
+     [31m×[39m should classify low velocit
+y (<0.5) as OKAY
+     [31m×[39m should classify high engage
+ment (>50 views/sub) as OKAY
+     [32m✓[39m should return null (fall th
+rough to AI) for ambiguous cases
+[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 2 [27m[22m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify low velocity (<0.5) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m48:28[22m[39m
+    [90m 46| [39m        [35mconst[39m channel [33m=[39m [34mcre[39m…
+    [90m 47| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
+    [90m 48| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
+    [90m   | 
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify low velocity (<0.5) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m48:28[22m[39m
+    [90m 46| [39m        [35mconst[39m channel [33m=[39m …
+    [90m    [90m 46| [39m        [35mconst[39m channel [33m=[39m [34mcre[39m…
+    [90m 47| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
+    [90m 48| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
+    [90m   | [39m                           [31m^[39m
+    [90m 49| [39m        [34mexpect[39m(result[33m?.[39mclas…
+    [90m 50| [39m        [34mexpect[39m(result[33m?.[39mreas…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify high engagement (>50 views/sub) as OKAY
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m61:28[22m[39m
+    [90m 59| [39m        })[33m;[39m
+    [90m 60| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
+    [90m 61| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
+    [90m   | [39m                           [31m^[39m
+    [90m 62| [39m        [34mexpect[39m(result[33m?.[39mclas…
+    [90m 63| [39m        [34mexpect[39m(result[33m?.[39mreas…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 13:24:10
+[2m   Duration [22m 79ms
+
+
+[1m[7m[31m FAIL [39m[27m[22m[31m Tests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+[?25l       [34mrerun x14[39m
+[?25l[2K[1A[2K[G       [90mrerun x14[39m
+[?25l[2K[1A[2K[G       [2m[90mrerun x14[39m[22m
+[2K[1A[2K[G[3Jc
+[7m[1m[34m RERUN [39m[22m[27m[2m src/trigger/lib/classifier.ts[22m [34mx15[39m
 
 [?25l [90m·[39m [2msrc/trigger/__tests__/[22mclassifier[2m.t[22m
 [2mest.ts[22m[2m (5)[22m
@@ -504,101 +973,66 @@ gh to AI) for ambiguous cases
 
 [31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify low velocity (<0.5) as OKAY
 [31m[1mAssertionError[22m: expected null not to be null[39m
-[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m47:28[22m[39m
-    [90m 45| [39m        [35mconst[39m channel [33m=[39m [34mcre[39m…
-    [90m 46| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
-    [90m 47| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m48:28[22m[39m
+    [90m 46| [39m        [35mconst[39m channel [33m=[39m [34mcre[39m…
+    [90m 47| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
+    [90m 48| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
     [90m   | [39m                           [31m^[39m
-    [90m 48| [39m        [34mexpect[39m(result[33m?.[39mclas…
-    [90m 49| [39m        [34mexpect[39m(result[33m?.[39mreas…
+    [90m 49| [39m        [34mexpect[39m(result[33m?.[39mclas…
+    [90m 50| [39m        [34mexpect[39m(result[33m?.[39mreas…
 
 [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
 
 [31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify high engagement (>50 views/sub) as OKAY
 [31m[1mAssertionError[22m: expected null not to be null[39m
-[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m60:28[22m[39m
-    [90m 58| [39m        })[33m;[39m
-    [90m 59| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
-    [90m 60| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
+[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m61:28[22m[39m
+    [90m 59| [39m        })[33m;[39m
+    [90m 60| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
+    [90m 61| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
     [90m   | [39m                           [31m^[39m
-    [90m 61| [39m        [34mexpect[39m(result[33m?.[39mclas…
-    [90m 62| [39m        [34mexpect[39m(result[33m?.[39mreas…
+    [90m 62| [39m        [34mexpect[39m(result[33m?.[39mclas…
+    [90m 63| [39m        [34mexpect[39m(result[33m?.[39mreas…
 
 [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
 
 [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
 [2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (5)[39m
-[2m   Start at [22m 12:48:45
-[2m   Duration [22m 73ms
+[2m   Start at [22m 13:28:45
+[2m   Duration [22m 127ms
 
 
 [1m[7m[31m FAIL [39m[27m[22m[31m Tests failed. Watching for file changes...[39m
        [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
-[?25l       [34mrerun x9[39m
-[?25l[2K[1A[2K[G       [90mrerun x9[39m
-[?25l[2K[1A[2K[G       [2m[90mrerun x9[39m[22m
+[?25l       [34mrerun x15[39m
+[?25l[2K[1A[2K[G       [90mrerun x15[39m
+[?25l[2K[1A[2K[G       [2m[90mrerun x15[39m[22m
 [2K[1A[2K[G[3Jc
-[7m[1m[34m RERUN [39m[22m[27m[2m src/trigger/lib/classifier.ts[22m [34mx10[39m
+[7m[1m[34m RERUN [39m[22m[27m[2m src/trigger/__tests__/classifier.test.ts[22m [34mx16[39m
 
-[?25l [90m·[39m [2msrc/trigger/__tests__/[22mclassifier[2m.t[22m
-[2mest.ts[22m[2m (5)[22m
-   [90m·[39m classifyByRules[2m (5)[22m
-     [90m·[39m should classify high velocity 
-(>10) as SLOP
-     [90m·[39m should classify medium velocit
-y (>5) with spam keywords as SLOP
-     [90m·[39m should classify low velocity (
-<0.5) as OKAY
-     [90m·[39m should classify high engagemen
-t (>50 views/sub) as OKAY
-     [90m·[39m should return null (fall throu
-gh to AI) for ambiguous cases
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifier[2m.t[22m
-[2mest.ts[22m[2m (5)[22m
-   [33m❯[39m classifyByRules[2m (5)[22m
+[?25l [32m✓[39m [2msrc/trigger/__tests__/[22mclassifier[2m.t[22m
+[2mest.ts[22m[2m (3)[22m
+   [32m✓[39m classifyByRules[2m (3)[22m
      [32m✓[39m should classify high velocity 
 (>10) as SLOP
      [32m✓[39m should classify medium velocit
 y (>5) with spam keywords as SLOP
-     [31m×[39m should classify low velocity (
-<0.5) as OKAY
-     [31m×[39m should classify high engagemen
-t (>50 views/sub) as OKAY
      [32m✓[39m should return null (fall throu
 gh to AI) for ambiguous cases
-[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [33m❯[39m [2msrc/trigger/__tests__/[22mclassifier[2m.test.ts[22m[2m (5)[22m
-   [33m❯[39m classifyByRules[2m (5)[22m
+[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G [32m✓[39m [2msrc/trigger/__tests__/[22mclassifier[2m.test.ts[22m[2m (3)[22m
+   [32m✓[39m classifyByRules[2m (3)[22m
      [32m✓[39m should classify high velocity (>10) as SLOP
      [32m✓[39m should classify medium velocity (>5) with spam keywords as SLOP
-     [31m×[39m should classify low velocity (<0.5) as OKAY
-     [31m×[39m should classify high engagement (>50 views/sub) as OKAY
      [32m✓[39m should return null (fall through to AI) for ambiguous cases
 
-[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 2 [27m[22m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m   Start at [22m 13:28:47
+[2m   Duration [22m 64ms
 
-[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify low velocity (<0.5) as OKAY
-[31m[1mAssertionError[22m: expected null not to be null[39m
-[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m47:28[22m[39m
-    [90m 45| [39m        [35mconst[39m channel [33m=[39m [34mcre[39m…
-    [90m 46| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
-    [90m 47| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
-    [90m   | [39m                           [31m^[39m
-    [90m 48| [39m        [34mexpect[39m(result[33m?.[39mclas…
-    [90m 49| [39m        [34mexpect[39m(result[33m?.[39mreas…
 
-[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
-
-[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify high engagement (>50 views/sub) as OKAY
-[35mconst[39m result [33m=[39m [34mclas[39m…
-    [90m 47| [39m        [34mexpect[39m(result)[33m.[39mnot[33m.[39m…
-    [90m   | [39m                           [31m^[39m
-    [90m 48| [39m        [34mexpect[39m(result[33m?.[39mclas…
-    [90m 49| [39m        [34mexpect[39m(result[33m?.[39mreas…
-
-[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
-
-[31m[1m[7m FAIL [27m[22m[39m src/trigger/__tests__/classifier.test.ts[2m > [22mclassifyByRules[2m > [22mshould classify high engagement (>50 views/sub) as OKAY
-[31m[1mAssertionError[22m: expected null not to be null[39m
-[36m [2m❯[22m src/trigger/__tests__/classifier.test.ts:[2m60:28[22m[39m
-    [90m 58| [39m        })[33m;[39m
-    [90m 59| [39m        [35mconst[39m result [33m=[39m [34mclas[39m…
+[1m[7m[32m PASS [39m[27m[22m[32m Waiting for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+[?25l       [34mrerun x16[39m
+[?25l[2K[1A[2K[G       [90mrerun x16[39m
+[?25l[2K[1A[2K[G       [2m[90mrerun x16[39m[22m
+[2K[1A[2K[G[?25h

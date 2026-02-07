@@ -5,7 +5,7 @@ import type { YouTubeChannel, NormalizedChannel } from "./types";
  */
 export function normalizeChannel(
     raw: YouTubeChannel,
-    recentVideos: string[],
+    recentVideos: { id: string; title: string; publishedAt: string }[], // Rich objects
     latestVideoId?: string
 ): NormalizedChannel {
     const publishedAt = new Date(raw.snippet.publishedAt);
@@ -15,6 +15,16 @@ export function normalizeChannel(
     const videoCount = raw.statistics.videoCount;
     const subscriberCount = raw.statistics.subscriberCount || 1; // avoid division by zero
     const viewCount = raw.statistics.viewCount;
+
+    // Calculate Recent Velocity (last 14 days)
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000);
+    const recentUploads = recentVideos.filter(v => new Date(v.publishedAt) > twoWeeksAgo);
+
+    // If we have less than 14 days of history/videos, we might under-calculate, 
+    // but usually "velocity" implies density.
+    // If the channel is brand new (<14 days), usage ageInDays.
+    const recentDivisor = Math.min(ageInDays, 14);
+    const recentVelocity = recentUploads.length / Math.max(1, recentDivisor);
 
     return {
         channelId: raw.id,
@@ -30,6 +40,7 @@ export function normalizeChannel(
         viewCount,
 
         velocity: videoCount / ageInDays,
+        recentVelocity,
         ageInDays,
         viewsPerSub: viewCount / subscriberCount,
 

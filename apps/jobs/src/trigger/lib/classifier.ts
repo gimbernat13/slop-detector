@@ -77,7 +77,7 @@ export function classifyByRules(channel: NormalizedChannel): ClassificationResul
             method: "rule",
             metrics: getMetrics(channel),
             reasons: ["High velocity (>10 videos/day)"],
-            recentVideos: channel.recentVideos,
+            recentVideos: channel.recentVideos.map(v => v.title),
             latestVideoId: channel.latestVideoId,
         };
     }
@@ -102,7 +102,7 @@ export function classifyByRules(channel: NormalizedChannel): ClassificationResul
             method: "rule",
             metrics: getMetrics(channel),
             reasons: ["High velocity (>5/day) with spam keywords"],
-            recentVideos: channel.recentVideos,
+            recentVideos: channel.recentVideos.map(v => v.title),
             latestVideoId: channel.latestVideoId,
         };
     }
@@ -216,7 +216,7 @@ Respond with ONLY valid JSON:
                 behaviorSignals: parsed.behaviorSignals,
             },
             reasons: [parsed.reasoning],
-            recentVideos: channel.recentVideos,
+            recentVideos: channel.recentVideos.map(v => v.title),
             latestVideoId: channel.latestVideoId,
         };
     } catch (error) {
@@ -239,7 +239,7 @@ Respond with ONLY valid JSON:
                 viewCount: channel.viewCount,
             },
             reasons: [`AI classification failed: ${error}`],
-            recentVideos: channel.recentVideos,
+            recentVideos: channel.recentVideos.map(v => v.title),
             latestVideoId: channel.latestVideoId,
         };
     }

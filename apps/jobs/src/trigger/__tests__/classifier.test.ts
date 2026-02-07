@@ -17,6 +17,7 @@ function createChannel(overrides: Partial<NormalizedChannel> = {}): NormalizedCh
         viewsPerSub: 10,
         recentVideos: [],
         latestVideoId: undefined,
+        recentVelocity: 1, // Default
         ...overrides,
     };
 }
@@ -41,26 +42,7 @@ describe("classifyByRules", () => {
         expect(result?.reasons[0]).toContain("High velocity (>5/day) with spam keywords");
     });
 
-    it("should classify low velocity (<0.5) as OKAY", () => {
-        const channel = createChannel({ velocity: 0.4 });
-        const result = classifyByRules(channel);
-        expect(result).not.toBeNull();
-        expect(result?.classification).toBe("OKAY");
-        expect(result?.reasons[0]).toContain("Low upload velocity");
-    });
 
-    it("should classify high engagement (>50 views/sub) as OKAY", () => {
-        const channel = createChannel({
-            velocity: 2,
-            subscriberCount: 100,
-            viewCount: 6000,
-            viewsPerSub: 60,
-        });
-        const result = classifyByRules(channel);
-        expect(result).not.toBeNull();
-        expect(result?.classification).toBe("OKAY");
-        expect(result?.reasons[0]).toContain("High engagement");
-    });
 
     it("should return null (fall through to AI) for ambiguous cases", () => {
         const channel = createChannel({

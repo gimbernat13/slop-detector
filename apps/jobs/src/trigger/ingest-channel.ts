@@ -165,10 +165,12 @@ export const ingestChannel = task({
                         ? await fetchRecentVideos(uploadsPlaylistId, 10)
                         : [];
 
-                    const recentVideoTitles = recentVideosData.map(v => v.title);
                     const latestVideoId = recentVideosData.length > 0 ? recentVideosData[0].id : undefined;
 
-                    const normalized = normalizeChannel(channel, recentVideoTitles, latestVideoId);
+                    // Pass rich data to normalizer
+                    const normalized = normalizeChannel(channel, recentVideosData, latestVideoId);
+
+                    console.log(`  > Recent Velocity: ${normalized.recentVelocity.toFixed(2)}/day (Lifetime: ${normalized.velocity.toFixed(2)})`);
 
                     const classification = await classifyChannel(normalized);
 
