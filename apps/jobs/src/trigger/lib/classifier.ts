@@ -58,7 +58,115 @@ function getAI() {
 // Rule-Based Classification
 // ============================================================
 
-export function classifyByRules(channel: NormalizedChannel): ClassificationResult | null {
+// --- SCORING ENGINE (Architecture 2.0) ---
+
+// Risk Score: 0 (Safe) -> 100 (Critical Slop)
+// Thresholds: < 20 = OKAY | 20-80 = SUSPICIOUS (AI Check) | > 80 = SLOP
+export function calculateRiskScore(channel: NormalizedChannel): {
+    score: number;
+    reasons: string[];
+    riskLevel: "LOW" | "MEDIUM" | "HIGH";
+} {
+    let score = 50; // Start neutral
+    const reasons: string[] = [];
+
+    // 1. POSITIVE SIGNALS (Reduce Risk)
+    // --------------------------------------------------
+
+    // Mega-Channel Safety Valve (MrBeast, PewDiePie level)
+    // BUT: Ignore if they are a content farm (high volume)
+    const isContentFarm = channel.videoCount && Number(channel.videoCount) > 10000;
+
+    if (channel.subscriberCount > 5_000_000) {
+        if (!isContentFarm) {
+            score -= 40;
+            reasons.push("Mega-Channel (>5M Subs)");
+        } else {
+            reasons.push("Mega-Channel (>5M Subs) but High Volume (ignored)");
+        }
+    } else if (channel.subscriberCount > 1_000_000) {
+        if (!isContentFarm) {
+            score -= 20;
+            reasons.push("Large Channel (>1M Subs)");
+        }
+    }
+
+    // High Engagement Ratio (Views/Subs) - Indicates actual humans watching
+    if (channel.viewsPerSub > 50) {
+        score -= 10;
+        reasons.push("High Engagement Ratio (>50 views/sub)");
+    }
+
+    // Low Velocity (The "Quality over Quantity" signal)
+    if (channel.recentVelocity < 0.15) { // Less than 1 video/week
+        score -= 10;
+        reasons.push("Low Velocity (<1 video/week)");
+    }
+
+    // Long-term Creator
+    if (channel.ageInDays > 730) {
+        score -= 10;
+        reasons.push("Established Channel (>2 years old)");
+    }
+
+    // 2. NEGATIVE SIGNALS (Increase Risk)
+    // --------------------------------------------------
+
+    // "Slop" Keywords in Title (Strong Signal)
+    const slopKeywords = [
+        /no copyright/i, /royalty free/i, /relaxing music/i, /lofi hip hop/i,
+        /satisfying/i, /asmr/i, /compilation/i, /tiktok mashup/i,
+        /ai generated/i, /chatgpt/i, /midjourney/i,
+        /minecraft but/i, /skibidi/i
+    ];
+
+    if ((channel.title && channel.title.match(/vevo/i)) || (channel.title && channel.title.match(/official/i))) {
+        score -= 30; // VEVO is safe
+        reasons.push("Official Artist/Brand Keyword");
+    } else {
+        if (channel.title) {
+            for (const regex of slopKeywords) {
+                if (channel.title.match(regex)) {
+                    score += 20;
+                    reasons.push(`Title matches spam keyword: ${regex}`);
+                }
+            }
+        }
+    }
+
+    // Excessive Hashtags
+    if (channel.title && (channel.title.match(/#/g) || []).length > 3) {
+        score += 15;
+        reasons.push("Excessive Hashtags in Title");
+    }
+
+    // High Velocity (Content Farm Signal)
+    if (channel.recentVelocity > 5.0) {
+        score += 40;
+        reasons.push("Extreme Velocity (>5 videos/day)");
+    } else if (channel.recentVelocity > 2.0) {
+        score += 20;
+        reasons.push("High Velocity (>2 videos/day)");
+    }
+
+    // Brand New Channel (<30 days)
+    if (channel.ageInDays < 30) {
+        score += 20;
+        reasons.push("Brand New Channel (<30 days)");
+    }
+
+    // 3. NORMALIZE & CLASSIFY
+    // --------------------------------------------------
+    score = Math.max(0, Math.min(100, score)); // Clamp 0-100
+
+    let riskLevel: "LOW" | "MEDIUM" | "HIGH" = "MEDIUM";
+    if (score < 30) riskLevel = "LOW";        // Safe
+    else if (score > 80) riskLevel = "HIGH";  // Critical Slop
+
+    return { score, reasons, riskLevel };
+}
+
+function classifyByRules(channel: NormalizedChannel): ClassificationResult | null {
     // 0. STRICT EXCLUSIONS (Safety First)
     // Made for Kids = SLOP (Kids content farm/slop)
     if (channel.isMadeForKids) {
@@ -69,233 +177,47 @@ export function classifyByRules(channel: NormalizedChannel): ClassificationResul
             slopScore: 90,
             slopType: "kids_content",
             method: "rule",
-            metrics: getMetrics(channel),
+            metrics: { ...getMetrics(channel), isMadeForKids: true },
             reasons: ["Channel is marked as 'Made for Kids' (Strict Exclusion Rule)"],
         };
     }
 
-    const avgTags = channel.recentVideos.reduce((acc, v) => acc + (v.tags?.length || 0), 0) / (channel.recentVideos.length || 1);
-    const avgDurationSeconds = channel.recentVideos.reduce((acc, v) => {
-        if (!v.duration) return acc;
-        const match = v.duration.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
-        const mins = parseInt(match?.[1] || "0");
-        const secs = parseInt(match?.[2] || "0");
-        return acc + (mins * 60 + secs);
-    }, 0) / (channel.recentVideos.length || 1);
+    // --- SCORING ENGINE INTEGRATION ---
+    const { score, reasons, riskLevel } = calculateRiskScore(channel);
 
-    // Heuristic slop keywords that should NEVER be auto-OKAY via rules
-    // ( Softened: Removed "puff" and "creative cooking" as these can be high-quality creators )
-    const slopArchetypeKeywords = [
-        "banana", "satisfying", "slime", "skibidi", "toilet", "minecraft but",
-        "toy play", "bad baby"
-    ];
-    const hasSlopArchetype = slopArchetypeKeywords.some(k =>
-        channel.title.toLowerCase().includes(k) ||
-        channel.description.toLowerCase().includes(k)
-    );
+    // Filter out internal scoring reasons from final output if needed, but beneficial for debugging
+    console.log(`📊 Risk Score: ${score} (${riskLevel}) | Reasons: ${reasons.join(", ")}`);
 
-    // 0.5 SAFE PATH RULES (Early OKAY for reputation)
-    // Rule: Major Authority (>5M subs AND shows human effort markers)
-    // EXCLUSION: Slop archetypes (Banana, toilet, etc.) must always go to AI/other rules.
-    if (channel.subscriberCount > 5000000 && avgTags > 3 && avgDurationSeconds > 45 && !hasSlopArchetype) {
-        return {
-            ...getBaseResult(channel),
-            classification: "OKAY",
-            confidence: 95,
-            slopScore: 5,
-            slopType: null,
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["Major established channel (>5M subscribers) with human effort indicators"],
-        };
-    }
-
-    // Rule: High Viral Engagement (Exclude if suspiciously low effort/slop markers)
-    // Requirement for OKAY: Must have decent tags and not be a slop archetype
-    if (channel.viewsPerSub > 1000 && channel.subscriberCount > 5000 && avgTags > 4 && !hasSlopArchetype) {
+    // 1. Safe (Auto-Approve)
+    if (riskLevel === "LOW") {
         return {
             ...getBaseResult(channel),
             classification: "OKAY",
             confidence: 90,
-            slopScore: 10,
+            slopScore: score,
             slopType: null,
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["Exceptional viral engagement (>1000 views/sub)"],
+            method: "rules",
+            metrics: { ...getMetrics(channel), isMadeForKids: false },
+            reasons
         };
     }
 
-    // Rule: Established Creator (Account Age + Volume + Low Velocity)
-    if (channel.ageInDays > 365 && channel.videoCount > 100 && channel.velocity < 1.0 && channel.subscriberCount > 10000 && avgTags > 2 && !hasSlopArchetype) {
-        return {
-            ...getBaseResult(channel),
-            classification: "OKAY",
-            confidence: 85,
-            slopScore: 15,
-            slopType: null,
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["Established long-term creator (Age > 1yr, low velocity)"],
-        };
-    }
-
-    // 1. SLOP RULES (Bypass AI for obvious spam)
-    // Rule: Extreme High Velocity (>10/day for non-established)
-    if (channel.velocity > 10 && channel.subscriberCount < 100000) {
-        return {
-            ...getBaseResult(channel),
-            classification: "SLOP",
-            confidence: 95,
-            slopScore: 100,
-            slopType: "templated_spam",
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["Extreme high velocity (>10 videos/day) for a non-established channel"],
-        };
-    }
-
-    // Rule: High Velocity + Content Keywords
-    const spamKeywords = ["lofi", "meditation", "rain", "frequency", "binaural", "study", "relaxing", "24/7"];
-    const hasSpamKeywords = spamKeywords.some(k =>
-        channel.title.toLowerCase().includes(k) ||
-        channel.description.toLowerCase().includes(k)
-    );
-    if (channel.velocity > 5 && hasSpamKeywords) {
+    // 2. Slop (Auto-Reject)
+    if (riskLevel === "HIGH") {
         return {
             ...getBaseResult(channel),
             classification: "SLOP",
             confidence: 90,
-            slopScore: 90,
-            slopType: "background_music",
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["High velocity (>5/day) with spam keywords"],
-        };
-    }
-
-    // 4. POLITICAL SLOP RULES
-    const alarmistKeywords = ["secret leaked", "election fraud", "breaking political", "government leak", "insider reveals", "martial law"];
-    const hasAlarmistKeywords = alarmistKeywords.some(k =>
-        channel.title.toLowerCase().includes(k) ||
-        channel.description.toLowerCase().includes(k)
-    );
-
-    // If Category is News (25) AND has alarmist keywords AND substantial velocity -> SLOP
-    if (channel.categoryId === "25" && hasAlarmistKeywords && channel.velocity > 3) {
-        return {
-            channelId: channel.channelId,
-            title: channel.title,
-            description: channel.description,
-            thumbnailUrl: channel.thumbnailUrl,
-            classification: "SLOP",
-            confidence: 90,
-            slopScore: 95,
-            slopType: "political_slop",
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["Deterministic Political Slop: News category with alarmist keywords and high velocity"],
-            recentVideos: channel.recentVideos.map(v => v.title),
-            latestVideoId: channel.latestVideoId,
-        };
-    }
-
-    // 5. VELOCITY GUARDRAILS
-    // Any channel posting > 8 videos/day that isn't established (subs < 20k) -> SUSPICIOUS
-    if (channel.velocity > 8 && channel.subscriberCount < 20000) {
-        return {
-            channelId: channel.channelId,
-            title: channel.title,
-            description: channel.description,
-            thumbnailUrl: channel.thumbnailUrl,
-            classification: "SUSPICIOUS",
-            confidence: 85,
-            slopScore: 70,
+            slopScore: score,
             slopType: "templated_spam",
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["Extreme velocity (>8/day) with low subscriber base"],
-            recentVideos: channel.recentVideos.map(v => v.title),
-            latestVideoId: channel.latestVideoId,
+            method: "rules",
+            metrics: { ...getMetrics(channel), isMadeForKids: false },
+            reasons
         };
     }
 
-    // 6. PHASE 2: ADVANCED DETERMINISTIC SIGNALS
-
-    // Rule: Zero Tags (Legitimate creators almost always tag videos)
-    // If average tags < 1 AND channel is small/medium -> SUSPICIOUS
-    if (avgTags < 1 && channel.subscriberCount < 50000) {
-        return {
-            channelId: channel.channelId,
-            title: channel.title,
-            description: channel.description,
-            thumbnailUrl: channel.thumbnailUrl,
-            classification: "SUSPICIOUS",
-            confidence: 80,
-            slopScore: 60,
-            slopType: "templated_spam",
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["Zero tags detected across recent videos (Average tags < 1)"],
-            recentVideos: channel.recentVideos.map(v => v.title),
-            latestVideoId: channel.latestVideoId,
-        };
-    }
-
-    // Rule: Engagement Gap (Posting frequently but no sub interest)
-    // If velocity > 2 AND views-per-sub is extremely low AND established enough for subs to matter (>10k)
-    if (channel.velocity > 2 && channel.viewsPerSub < 0.1 && channel.subscriberCount > 10000) {
-        return {
-            channelId: channel.channelId,
-            title: channel.title,
-            description: channel.description,
-            thumbnailUrl: channel.thumbnailUrl,
-            classification: "SLOP",
-            confidence: 90,
-            slopScore: 85,
-            slopType: "templated_spam",
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["Engagement Gap: High velocity with extremely low subscriber interest (< 0.1 views/sub)"],
-            recentVideos: channel.recentVideos.map(v => v.title),
-            latestVideoId: channel.latestVideoId,
-        };
-    }
-
-    // 7. PHASE 3: SHORTS CHURNERS & HASHTAG SPAM (TL;DR Efficiency)
-
-    const hasHashtagSpam = channel.recentVideos.some(v => (v.title.match(/#/g) || []).length >= 3);
-    const movieShowPattern = /".*"\s*#movie|#show|#edit/i;
-    const hasMovieShowPattern = channel.recentVideos.some(v => movieShowPattern.test(v.title));
-
-    // Rule: Shorts Churner (Short videos + No tags + Not huge subs)
-    if (avgDurationSeconds < 65 && avgTags < 1 && channel.subscriberCount < 500000) {
-        return {
-            ...getBaseResult(channel),
-            classification: "SUSPICIOUS",
-            confidence: 85,
-            slopScore: 75,
-            slopType: "templated_spam",
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["Shorts Churner pattern: Average duration < 65s with zero tags"],
-        };
-    }
-
-    // Rule: Hashtag Spam or Movie Clip pattern
-    if ((hasHashtagSpam || hasMovieShowPattern) && channel.subscriberCount < 100000) {
-        return {
-            ...getBaseResult(channel),
-            classification: "SUSPICIOUS",
-            confidence: 80,
-            slopScore: 65,
-            slopType: "templated_spam",
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: [hasHashtagSpam ? "Excessive hashtag usage in titles" : "Movie/Show clip re-upload pattern detected"],
-        };
-    }
-
-    return null; // No rule match -> Send to AI
+    // 3. Medium Risk -> Return NULL to trigger AI
+    return null;
 }
 
 function getBaseResult(channel: NormalizedChannel) {

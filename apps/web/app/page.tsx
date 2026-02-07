@@ -6,10 +6,12 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   // Fetch all channels for client-side filtering
-  const [channels, stats] = await Promise.all([
-    getChannels(),
+  const [channelsData, stats] = await Promise.all([
+    getChannels(undefined, 20, 0),
     getStats(),
   ]);
+
+  const initialChannels = channelsData.items;
 
   const counts = {
     all: stats.slop + stats.suspicious + stats.okay,
@@ -96,7 +98,7 @@ export default async function DashboardPage() {
 
           {/* Channel Table */}
           <div className="xl:col-span-4">
-            <DashboardClient channels={channels} counts={counts} />
+            <DashboardClient initialChannels={initialChannels} counts={counts} />
           </div>
         </div>
       </main>

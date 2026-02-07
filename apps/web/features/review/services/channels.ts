@@ -11,6 +11,11 @@ import { revalidatePath } from "next/cache";
 
 export async function getChannels(filter?: Classification): Promise<Channel[]> {
     const db = getDb();
+    // Pagination Response
+    export type PaginatedChannels = {
+        items: Channel[];
+        nextCursor?: number;
+    };
 
     if (filter) {
         return await db
