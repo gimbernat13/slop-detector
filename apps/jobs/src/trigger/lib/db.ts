@@ -38,6 +38,7 @@ export async function insertClassification(result: ClassificationResult) {
         recentVideos: result.recentVideos,
         latestVideoId: result.latestVideoId,
         aiReasoning: result.aiAnalysis?.reasoning ?? null,
+        categoryId: result.metrics.categoryId ?? null,
         humanReviewStatus: "pending",
     }).onConflictDoUpdate({
         target: channels.channelId,
@@ -51,6 +52,7 @@ export async function insertClassification(result: ClassificationResult) {
             videoCount: result.metrics.videoCount,
             viewsPerSub: result.metrics.viewsPerSub,
             isMadeForKids: result.metrics.isMadeForKids ?? false,
+            categoryId: result.metrics.categoryId ?? null,
             reasons: result.reasons,
             recentVideos: result.recentVideos,
             latestVideoId: result.latestVideoId,

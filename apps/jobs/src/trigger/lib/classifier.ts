@@ -136,6 +136,7 @@ function getMetrics(channel: NormalizedChannel) {
         subscriberCount: channel.subscriberCount,
         viewCount: channel.viewCount,
         isMadeForKids: channel.isMadeForKids,
+        categoryId: channel.categoryId,
     };
 }
 
@@ -158,11 +159,22 @@ export async function classifyChannel(channel: NormalizedChannel): Promise<Class
     });
 
 
+    // Format rich video context for the prompt
+    const videoContext = channel.recentVideos.slice(0, 10).map((v, i) => {
+        const durationStr = v.duration ? ` | Duration: ${v.duration}` : "";
+        const tagsStr = v.tags && v.tags.length > 0 ? ` | Tags: [${v.tags.slice(0, 5).join(", ")}]` : "";
+        const viewsStr = v.viewCount ? ` | Views: ${Number(v.viewCount).toLocaleString()}` : "";
+        return `Video ${i + 1}: "${v.title}"${durationStr}${viewsStr}${tagsStr}`;
+    }).join("\n");
+
     const prompt = `Analyze this YouTube channel and classify it for AI-generated slop/spam content.
 
 - Title: "${channel.title}"
 - Description: "${channel.description.slice(0, 500)}"
-- Recent Video Titles: ${channel.recentVideos.slice(0, 10).map(v => `"${v.title}"`).join(", ")}
+- Category ID: ${channel.categoryId || "Unknown"}
+
+RECENT VIDEOS (with context):
+${videoContext}
 
 METRICS:
 - Videos per day: ${channel.velocity.toFixed(2)}
@@ -178,7 +190,8 @@ IMPORTANT GUIDELINES:
 1. **Quality over Format**: Even if a channel posts frequently or uses "hooks", look for High-Quality Indicators:
     - **High Production Value**: Unique b-roll, face-on-camera, custom animations, or on-location filming.
     - **Industry Reputation**: Is this a known reputable educator, tech reviewer, or journalist? (e.g. Jeff Geerling, Gamers Nexus, LTT).
-    - **Unique Insights**: Does the content offer deep analysis, personal experience, or unique perspectives?
+    - **Unique Insights**: Does the content offer deep analysis, personal experience, or unique perspectives.
+    - **Rich Context**: Deeply tagged videos and longer durations (10m+) often signal human effort.
 2. **Be Careful with "Templated Spam"**: 
     - Reputable channels often use consistent branding, but SLOP/SPAM is characterized by lack of human personality, repetitive generic footage, and generic AI-written scripts.
     - Do NOT label high-effort investigative or educational content as "templated_spam" just because they use a professional structure.
@@ -238,7 +251,7 @@ Respond with ONLY valid JSON:
                 behaviorSignals: parsed.behaviorSignals,
             },
             reasons: [parsed.reasoning],
-            recentVideos: channel.recentVideos.map(v => v.title),
+            recentVideos: channel.recentVideos.map(v => typeof v === "string" ? v : v.title),
             latestVideoId: channel.latestVideoId,
         };
     } catch (error) {
@@ -262,7 +275,7 @@ Respond with ONLY valid JSON:
                 isMadeForKids: channel.isMadeForKids,
             },
             reasons: [`AI classification failed: ${error}`],
-            recentVideos: channel.recentVideos.map(v => v.title),
+            recentVideos: channel.recentVideos.map(v => typeof v === "string" ? v : v.title),
             latestVideoId: channel.latestVideoId,
         };
     }

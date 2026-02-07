@@ -5,7 +5,15 @@ import type { YouTubeChannel, NormalizedChannel } from "./types";
  */
 export function normalizeChannel(
     raw: YouTubeChannel,
-    recentVideos: { id: string; title: string; publishedAt: string; isMadeForKids?: boolean }[], // Rich objects
+    recentVideos: {
+        id: string;
+        title: string;
+        publishedAt: string;
+        isMadeForKids?: boolean;
+        tags?: string[];
+        duration?: string;
+        viewCount?: string;
+    }[], // Rich objects
     latestVideoId?: string
 ): NormalizedChannel {
     const publishedAt = new Date(raw.snippet.publishedAt);
@@ -29,6 +37,12 @@ export function normalizeChannel(
     const recentDivisor = Math.min(ageInDays, 14);
     const recentVelocity = recentUploads.length / Math.max(1, recentDivisor);
 
+    // Determine dominant category from recent videos
+    const categories = recentVideos.map(v => v.categoryId).filter(Boolean);
+    const categoryCount: Record<string, number> = {};
+    categories.forEach(c => categoryCount[c!] = (categoryCount[c!] || 0) + 1);
+    const dominantCategory = Object.entries(categoryCount).sort((a, b) => b[1] - a[1])[0]?.[0];
+
     return {
         channelId: raw.id,
         title: raw.snippet.title,
@@ -36,7 +50,7 @@ export function normalizeChannel(
         publishedAt: raw.snippet.publishedAt,
         thumbnailUrl: raw.snippet.thumbnails?.default?.url,
         latestVideoId,
-
+        categoryId: dominantCategory || raw.snippet.categoryId,
 
         videoCount,
         subscriberCount,
@@ -50,7 +64,10 @@ export function normalizeChannel(
         recentVideos: recentVideos.map(v => ({
             id: v.id,
             title: v.title,
-            publishedAt: v.publishedAt
+            publishedAt: v.publishedAt,
+            tags: v.tags,
+            duration: v.duration,
+            viewCount: v.viewCount
         })),
         isMadeForKids
     };

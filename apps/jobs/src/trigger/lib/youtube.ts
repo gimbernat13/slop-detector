@@ -1,28 +1,28 @@
-import { YouTubeChannelSchema } from "@slop-detector/shared";
-import type { YouTubeChannel } from "@slop-detector/shared";
 import { z } from "zod";
-import { loadEnv } from "./env.js";
-
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
-function getApiKey(): string {
-    loadEnv();
+function getApiKey() {
     const key = process.env.YOUTUBE_API_KEY;
     if (!key) throw new Error("YOUTUBE_API_KEY not set");
     return key;
 }
 
+const PlaylistItemSchema = z.object({
+    snippet: z.object({
+        title: z.string(),
+        publishedAt: z.string(),
+        resourceId: z.object({
+            videoId: z.string(),
+        }),
+    }),
+});
 
-// ============================================================
-// Fetch channel metadata (batch up to 50)
-// ============================================================
-
-export async function fetchChannelMetadata(channelIds: string[]): Promise<YouTubeChannel[]> {
+/**
+ * Fetch basic metadata for a list of channel IDs
+ */
+export async function fetchChannelMetadata(channelIds: string[]) {
     if (channelIds.length === 0) return [];
-    if (channelIds.length > 50) {
-        throw new Error("YouTube API only allows 50 channels per request");
-    }
 
     const url = new URL(`${YOUTUBE_API_BASE}/channels`);
     url.searchParams.set("part", "snippet,statistics,contentDetails");
@@ -35,26 +35,21 @@ export async function fetchChannelMetadata(channelIds: string[]): Promise<YouTub
     }
 
     const data = await response.json() as any;
-    const items = data.items || [];
-
-    return items.map((item: unknown) => YouTubeChannelSchema.parse(item));
+    return data.items || [];
 }
 
-// ============================================================
-// Fetch recent videos for a channel (using playlistItems = 1 quota unit)
-// ============================================================
-
-const PlaylistItemSchema = z.object({
-    snippet: z.object({
-        title: z.string(),
-        publishedAt: z.string(),
-        resourceId: z.object({
-            videoId: z.string(),
-        }),
-    }),
-});
-
-export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 10): Promise<{ id: string, title: string, publishedAt: string, isMadeForKids?: boolean }[]> {
+/**
+ * Fetch recent videos for a channel using its uploads playlist ID
+ */
+export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 10): Promise<{
+    id: string,
+    title: string,
+    publishedAt: string,
+    isMadeForKids?: boolean,
+    tags?: string[],
+    duration?: string,
+    viewCount?: string
+}[]> {
     if (!uploadsPlaylistId) return [];
 
     const url = new URL(`${YOUTUBE_API_BASE}/playlistItems`);
@@ -88,10 +83,10 @@ export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 
 
     if (basicVideos.length === 0) return [];
 
-    // ENRICHMENT: Fetch "madeForKids" status from videos.list
+    // ENRICHMENT: Fetch rich metadata (madeForKids, tags, duration, viewCount) from videos.list
     const videoIds = basicVideos.map(v => v.id).join(",");
     const statusUrl = new URL(`${YOUTUBE_API_BASE}/videos`);
-    statusUrl.searchParams.set("part", "status");
+    statusUrl.searchParams.set("part", "snippet,status,contentDetails,statistics");
     statusUrl.searchParams.set("id", videoIds);
     statusUrl.searchParams.set("key", getApiKey());
 
@@ -99,21 +94,34 @@ export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 
         const sResponse = await fetch(statusUrl.toString());
         if (sResponse.ok) {
             const sData = await sResponse.json() as any;
-            const statusMap = new Map<string, boolean>();
+            const metaMap = new Map<string, any>();
 
             for (const vItem of (sData.items || [])) {
-                if (vItem.id && vItem.status) {
-                    statusMap.set(vItem.id, !!vItem.status.madeForKids);
+                if (vItem.id) {
+                    metaMap.set(vItem.id, {
+                        isMadeForKids: !!vItem.status?.madeForKids,
+                        tags: vItem.snippet?.tags || [],
+                        categoryId: vItem.snippet?.categoryId,
+                        duration: vItem.contentDetails?.duration,
+                        viewCount: vItem.statistics?.viewCount,
+                    });
                 }
             }
 
-            return basicVideos.map(v => ({
-                ...v,
-                isMadeForKids: statusMap.get(v.id) ?? false
-            }));
+            return basicVideos.map((v: { id: string; title: string; publishedAt: string }) => {
+                const meta = metaMap.get(v.id);
+                return {
+                    ...v,
+                    isMadeForKids: meta?.isMadeForKids ?? false,
+                    tags: meta?.tags || [],
+                    categoryId: meta?.categoryId,
+                    duration: meta?.duration,
+                    viewCount: meta?.viewCount,
+                };
+            });
         }
     } catch (e) {
-        console.warn("Failed to fetch video statuses:", e);
+        console.warn("Failed to fetch rich video metadata:", e);
     }
 
     return basicVideos;

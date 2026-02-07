@@ -10,6 +10,7 @@ export const YouTubeChannelSchema = z.object({
         title: z.string(),
         description: z.string().default(""),
         publishedAt: z.string(),
+        categoryId: z.string().optional(),
         customUrl: z.string().optional(),
         thumbnails: z.object({
             default: z.object({ url: z.string() }).optional(),
@@ -43,13 +44,19 @@ export const YouTubeSearchResultSchema = z.object({
 });
 
 export const YouTubeVideoSchema = z.object({
-    id: z.object({
-        videoId: z.string(),
-    }),
+    id: z.string(),
     snippet: z.object({
         title: z.string(),
         publishedAt: z.string(),
+        tags: z.array(z.string()).optional(),
+        categoryId: z.string().optional(),
     }),
+    contentDetails: z.object({
+        duration: z.string().optional(),
+    }).optional(),
+    statistics: z.object({
+        viewCount: z.string().optional(),
+    }).optional(),
     status: z.object({
         madeForKids: z.boolean().optional(),
     }).optional(),
@@ -84,10 +91,14 @@ export const NormalizedChannelSchema = z.object({
         id: z.string(),
         title: z.string(),
         publishedAt: z.string(),
-        viewCount: z.string().optional(), // Optional since we might not always fetch it deep
+        viewCount: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+        duration: z.string().optional(),
+        categoryId: z.string().optional(),
     })),
 
     isMadeForKids: z.boolean().default(false),
+    categoryId: z.string().optional(),
 });
 
 // ============================================================
@@ -140,6 +151,7 @@ export const ClassificationResultSchema = z.object({
         subscriberCount: z.number(),
         viewCount: z.number(),
         isMadeForKids: z.boolean().optional(),
+        categoryId: z.string().optional(),
     }),
 
     // AI analysis (optional, only for AI method)

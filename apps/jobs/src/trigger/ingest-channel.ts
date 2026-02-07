@@ -170,6 +170,11 @@ export const ingestChannel = task({
                     // Pass rich data to normalizer
                     const normalized = normalizeChannel(channel, recentVideosData, latestVideoId);
 
+                    console.log(`  > Metadata Check: ${normalized.recentVideos.length} videos`);
+                    if (normalized.recentVideos.length > 0) {
+                        console.log(`  > First Video Sample: "${normalized.recentVideos[0].title}" | Tags: ${normalized.recentVideos[0].tags?.length || 0}`);
+                    }
+
                     console.log(`  > Recent Velocity: ${normalized.recentVelocity.toFixed(2)}/day (Lifetime: ${normalized.velocity.toFixed(2)})`);
 
                     const classification = await classifyChannel(normalized);
