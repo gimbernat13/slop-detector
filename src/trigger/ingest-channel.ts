@@ -1,5 +1,5 @@
 import { task } from "@trigger.dev/sdk/v3";
-import { fetchChannelMetadata, fetchRecentVideos, snowballExpand } from "./lib/youtube.js";
+import { fetchChannelMetadata, fetchRecentVideos } from "./lib/youtube.js";
 import { normalizeChannel, type YouTubeChannel } from "./lib/schema.js";
 import { classifyChannel } from "./lib/classifier.js";
 import { insertClassification } from "./lib/db.js";
@@ -12,8 +12,8 @@ export const ingestChannel = task({
     id: "ingest.channel",
     maxDuration: 600, // 10 minutes max
 
-    run: async (payload: { seedChannelIds?: string[]; keywords?: string[]; expandRelated?: boolean; minSubscribers?: number; minVideos?: number; targetCount?: number }) => {
-        const { seedChannelIds = [], keywords = [], expandRelated = true, minSubscribers = 0, minVideos = 0, targetCount = 100 } = payload;
+    run: async (payload: { seedChannelIds?: string[]; keywords?: string[]; minSubscribers?: number; minVideos?: number; targetCount?: number }) => {
+        const { seedChannelIds = [], keywords = [], minSubscribers = 0, minVideos = 0, targetCount = 100 } = payload;
 
         console.log(`Starting ingestion. Target: ${targetCount} results.`);
         console.log(`Filters: Min Subs=${minSubscribers}, Min Videos=${minVideos}`);
@@ -50,7 +50,7 @@ export const ingestChannel = task({
 
         // Load DB module once
         const { getExistingChannelIds, insertClassification } = await import("./lib/db.js");
-        const { fetchChannelMetadata, searchChannelsByTopic, fetchRecentVideos, snowballExpand, fetchTrendingChannelIds } = await import("./lib/youtube.js");
+        const { fetchChannelMetadata, searchChannelsByTopic, fetchRecentVideos, fetchTrendingChannelIds } = await import("./lib/youtube.js");
 
         let loopCount = 0;
 
@@ -103,16 +103,7 @@ export const ingestChannel = task({
                     }
                 }
 
-                // Mode C: Snowball from successful results (if enabled)
-                if (expandRelated && results.length > 0 && candidateQueue.size < 50) {
-                    // Pick last 5 winners to snowball
-                    const seeders = results.slice(-5).map(r => r.channelId);
-                    console.log(`Snowballing from ${seeders.length} recent winners...`);
-                    const related = await snowballExpand(seeders, 10, 50);
-                    related.forEach(id => {
-                        if (!visitedIds.has(id)) candidateQueue.add(id);
-                    });
-                }
+                // Mode C: Snowball removed
             }
 
             // If still empty, we are out of ideas

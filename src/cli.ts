@@ -224,10 +224,7 @@ async function main() {
             name: "mode",
             message: chalk.cyan.bold("🎯 Select discovery mode:"),
             choices: [
-                {
-                    name: `  ${chalk.green.bold("❄️  Snowball")}        ${chalk.gray("→ Find related channels from a seed")}`,
-                    value: "snowball",
-                },
+
                 {
                     name: `  ${chalk.magenta.bold("🔍 Topic Search")}    ${chalk.gray("→ Find active channels posting about a topic")}`,
                     value: "topic",
@@ -243,19 +240,7 @@ async function main() {
 
     let triggerPayload: any = {};
 
-    if (modeAnswer.mode === "snowball") {
-        const channelAnswer = await inquirer.prompt([
-            {
-                type: "input",
-                name: "input",
-                message: chalk.cyan("🔗 Enter seed channel ID (e.g., UC...):"),
-                validate: (input) => input.length > 5 ? true : "Please enter a valid channel ID",
-            },
-        ]);
-        const channelId = await parseChannelInput(channelAnswer.input);
-        triggerPayload = { seedChannelIds: [channelId], expandRelated: true };
-
-    } else if (modeAnswer.mode === "trending") {
+    if (modeAnswer.mode === "trending") {
         console.log(chalk.yellow("🌊 Fetching Top 50 Trending Channels..."));
         const { fetchTrendingChannelIds } = await import("./trigger/lib/youtube.js");
         // Fetch Gaming (20) and Entertainment (24)
