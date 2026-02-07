@@ -28,8 +28,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Header */}
-      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
+      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10 w-full">
+        <div className="w-full px-6 py-4 lg:px-12">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
@@ -57,8 +57,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <main className="w-full px-6 py-8 lg:px-12">
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
           {/* Stats Cards */}
           <div className="lg:col-span-1 space-y-6">
             <Card>
@@ -96,7 +96,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           </div>
 
           {/* Channel Table */}
-          <div className="lg:col-span-3">
+          <div className="xl:col-span-4">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Channels for Review</CardTitle>

@@ -1,12 +1,16 @@
 import { getDb, channels, desc, inArray, eq } from "@slop-detector/db";
 import type { ClassificationResult } from "@slop-detector/shared";
+import { loadEnv } from "./env.js";
+
 
 // ============================================================
 // Insert classification results
 // ============================================================
 
 export async function insertClassification(result: ClassificationResult) {
+    loadEnv();
     const db = getDb();
+
 
     console.log(`Inserting classification for ${result.channelId}`);
 
@@ -66,7 +70,9 @@ export async function insertClassifications(results: ClassificationResult[]) {
 // ============================================================
 
 export async function getSlopChannels(limit = 100) {
+    loadEnv();
     const db = getDb();
+
 
     return await db.select({
         channel_id: channels.channelId,
@@ -82,7 +88,9 @@ export async function getSlopChannels(limit = 100) {
 }
 
 export async function getExistingChannelIds(channelIds: string[]): Promise<Set<string>> {
+    loadEnv();
     const db = getDb();
+
     if (channelIds.length === 0) return new Set();
 
     const existing = await db.select({ channelId: channels.channelId })

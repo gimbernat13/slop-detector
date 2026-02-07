@@ -1,14 +1,18 @@
 import { YouTubeChannelSchema } from "@slop-detector/shared";
 import type { YouTubeChannel } from "@slop-detector/shared";
 import { z } from "zod";
+import { loadEnv } from "./env.js";
+
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
 function getApiKey(): string {
+    loadEnv();
     const key = process.env.YOUTUBE_API_KEY;
     if (!key) throw new Error("YOUTUBE_API_KEY not set");
     return key;
 }
+
 
 // ============================================================
 // Fetch channel metadata (batch up to 50)

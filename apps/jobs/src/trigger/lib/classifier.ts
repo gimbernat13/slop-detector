@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { NormalizedChannel, ClassificationResult } from "@slop-detector/shared";
+import { loadEnv } from "./env.js";
 
 // ============================================================
 // Rate limiting helpers
@@ -41,19 +42,138 @@ async function retryWithBackoff<T>(
 // ============================================================
 
 function getGeminiClient() {
+    loadEnv();
     const key = process.env.GEMINI_API_KEY;
     if (!key) throw new Error("GEMINI_API_KEY not set");
     return new GoogleGenerativeAI(key);
 }
 
-const genAI = getGeminiClient();
+let _genAI: GoogleGenerativeAI | null = null;
+function getAI() {
+    if (!_genAI) _genAI = getGeminiClient();
+    return _genAI;
+}
+
+// removed top-level initializer to avoid crashes during import/build
+
+
+// ============================================================
+// Rule-Based Classification
+// ============================================================
+
+export function classifyByRules(channel: NormalizedChannel): ClassificationResult | null {
+    // 1. SLOP RULES
+    // Velocity > 10/day = SLOP (Spam)
+    if (channel.velocity > 10) {
+        return {
+            channelId: channel.channelId,
+            title: channel.title,
+            description: channel.description,
+            thumbnailUrl: channel.thumbnailUrl,
+            classification: "SLOP",
+            confidence: 95,
+            slopScore: 100,
+            slopType: "templated_spam",
+            method: "rule",
+            metrics: getMetrics(channel),
+            reasons: ["High velocity (>10 videos/day)"],
+            recentVideos: channel.recentVideos,
+        };
+    }
+
+    // Velocity > 5/day AND keywords = SLOP
+    const spamKeywords = ["lofi", "meditation", "rain", "frequency", "binaural", "study", "relaxing", "24/7"];
+    const hasSpamKeywords = spamKeywords.some(k =>
+        channel.title.toLowerCase().includes(k) ||
+        channel.description.toLowerCase().includes(k)
+    );
+
+    if (channel.velocity > 5 && hasSpamKeywords) {
+        return {
+            channelId: channel.channelId,
+            title: channel.title,
+            description: channel.description,
+            thumbnailUrl: channel.thumbnailUrl,
+            classification: "SLOP",
+            confidence: 90,
+            slopScore: 90,
+            slopType: "background_music", // Most likely for this keyword set
+            method: "rule",
+            metrics: getMetrics(channel),
+            reasons: ["High velocity (>5/day) with spam keywords"],
+            recentVideos: channel.recentVideos,
+        };
+    }
+
+    // 2. OKAY RULES
+    // Velocity < 0.5/day (1 video every 2 days) = OKAY (usually)
+    if (channel.velocity < 0.5) {
+        return {
+            channelId: channel.channelId,
+            title: channel.title,
+            description: channel.description,
+            thumbnailUrl: channel.thumbnailUrl,
+            classification: "OKAY",
+            confidence: 80,
+            slopScore: 10,
+            slopType: null,
+            method: "rule",
+            metrics: getMetrics(channel),
+            reasons: ["Low upload velocity (<0.5/day)"],
+            recentVideos: channel.recentVideos,
+        };
+    }
+
+    // High Engagement > 50 views per sub = OKAY (Viral/Quality)
+    if (channel.viewsPerSub > 50) {
+        return {
+            channelId: channel.channelId,
+            title: channel.title,
+            description: channel.description,
+            thumbnailUrl: channel.thumbnailUrl,
+            classification: "OKAY",
+            confidence: 85,
+            slopScore: 5,
+            slopType: null,
+            method: "rule",
+            metrics: getMetrics(channel),
+            reasons: ["High engagement (>50 views/subscriber)"],
+            recentVideos: channel.recentVideos,
+        };
+    }
+
+    return null; // No rule match -> Send to AI
+}
+
+function getMetrics(channel: NormalizedChannel) {
+    return {
+        velocity: channel.velocity,
+        ageInDays: channel.ageInDays,
+        viewsPerSub: channel.viewsPerSub,
+        videoCount: channel.videoCount,
+        subscriberCount: channel.subscriberCount,
+        viewCount: channel.viewCount,
+    };
+}
+
 
 export async function classifyChannel(channel: NormalizedChannel): Promise<ClassificationResult> {
-    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
-    const model = genAI.getGenerativeModel({
+    // 1. Try Fast Path (Rules)
+    const ruleResult = classifyByRules(channel);
+    if (ruleResult) {
+        console.log(`⚡ Rule Matched: ${ruleResult.classification} (${ruleResult.reasons[0]})`);
+        return ruleResult;
+    }
+
+    // 2. Slow Path (AI)
+    console.log("🤖 No rule match. Calling Gemini AI...");
+    loadEnv();
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash-lite";
+    const model = getAI().getGenerativeModel({
         model: modelName,
         generationConfig: { responseMimeType: "application/json" }
     });
+
 
     const prompt = `Analyze this YouTube channel and classify it for AI-generated slop/spam content.
 

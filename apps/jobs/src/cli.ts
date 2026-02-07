@@ -10,9 +10,13 @@ import figlet from "figlet";
 import boxen from "boxen";
 import { config } from "dotenv";
 import { tasks, runs } from "@trigger.dev/sdk/v3";
+import { loadEnv } from "./trigger/lib/env.js";
 
-// Load env vars
-config();
+
+// Load env vars from root .env
+loadEnv();
+
+
 
 // Custom gradient theme
 const coolGradient = gradient(["#00d4ff", "#9333ea", "#ff0080"]);

@@ -28,7 +28,7 @@ export function ChannelTable({ channels }: ChannelTableProps) {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[250px]">Channel</TableHead>
+                        <TableHead>Channel</TableHead>
                         <TableHead>Classification</TableHead>
                         <TableHead>Score</TableHead>
                         <TableHead>Type</TableHead>

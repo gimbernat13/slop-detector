@@ -18,4 +18,4 @@ export function getDb(): NeonHttpDatabase<typeof schema> {
 }
 
 // Re-export drizzle operators for convenience
-export { eq, desc, asc, inArray, sql, and, or } from "drizzle-orm";
+export { eq, desc, asc, inArray, sql, and, or, lt } from "drizzle-orm";
