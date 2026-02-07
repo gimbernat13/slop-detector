@@ -21,11 +21,16 @@ export async function getChannels(filter?: Classification): Promise<Channel[]> {
             .limit(100);
     }
 
-    return await db
-        .select()
-        .from(channels)
-        .orderBy(desc(channels.slopScore))
-        .limit(100);
+    // Balanced fetch for Dashboard (50 of each to ensure all tabs have data)
+    const [slop, suspicious, okay] = await Promise.all([
+        db.select().from(channels).where(eq(channels.classification, "SLOP")).orderBy(desc(channels.slopScore)).limit(50),
+        db.select().from(channels).where(eq(channels.classification, "SUSPICIOUS")).orderBy(desc(channels.slopScore)).limit(50),
+        db.select().from(channels).where(eq(channels.classification, "OKAY")).orderBy(desc(channels.slopScore)).limit(50),
+    ]);
+
+    // Deduplicate just in case (though shouldn't happen with rigid queries)
+    const combined = [...slop, ...suspicious, ...okay];
+    return combined.sort((a, b) => (b.slopScore ?? 0) - (a.slopScore ?? 0));
 }
 
 // ============================================================

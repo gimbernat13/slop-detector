@@ -153,8 +153,8 @@ export const ingestChannel = task({
                         skippedLowVideos++;
                         continue;
                     }
-                    // Low Velocity Check (< 0.1/day = ~1 video every 10 days)
-                    if (normalizedPreview.velocity < 0.1) {
+                    // Low Velocity Check (< 0.01/day = ~1 video every 100 days)
+                    if (normalizedPreview.velocity < 0.01) {
                         skippedLowVelocity++;
                         continue;
                     }

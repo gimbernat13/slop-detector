@@ -231,29 +231,50 @@ async function main() {
     let triggerPayload: any = {};
 
     if (modeAnswer.mode === "trending") {
-        console.log(chalk.yellow("🌊 Fetching Top 50 Trending Channels..."));
+        console.log(chalk.yellow("🌊 Fetching Top Trending Channels + Infinite Topics..."));
         const { fetchTrendingChannelIds } = await import("./trigger/lib/youtube.js");
+
         // Fetch Gaming (20), Entertainment (24), Film (1), People (22), Tech (28)
+        // With Pagination (Depth = 100 per category)
+        const fetchDeep = async (cat: string) => {
+            const page1 = await fetchTrendingChannelIds(cat, 50);
+            let ids = page1.ids;
+            if (page1.nextPageToken) {
+                try {
+                    const page2 = await fetchTrendingChannelIds(cat, 50, page1.nextPageToken);
+                    ids = [...ids, ...page2.ids];
+                } catch (e) { }
+            }
+            return ids;
+        };
+
         const [gaming, entertainment, film, people, tech] = await Promise.all([
-            fetchTrendingChannelIds("20", 15),
-            fetchTrendingChannelIds("24", 15),
-            fetchTrendingChannelIds("1", 15),
-            fetchTrendingChannelIds("22", 15),
-            fetchTrendingChannelIds("28", 15)
+            fetchDeep("20"),
+            fetchDeep("24"),
+            fetchDeep("1"),
+            fetchDeep("22"),
+            fetchDeep("28")
         ]);
 
-        const allIds = [...new Set([
-            ...gaming.ids,
-            ...entertainment.ids,
-            ...film.ids,
-            ...people.ids,
-            ...tech.ids
-        ])];
+        const trendingIds = new Set([
+            ...gaming, ...entertainment, ...film, ...people, ...tech
+        ]);
 
-        console.log(chalk.green(`✅ Found ${allIds.length} unique trending channels.`));
+        // Add Random "Infinite" Topics
+        const SLOP_TOPICS = [
+            "minecraft but", "skibidi toilet", "asmr eating", "crypto news",
+            "fortnite glitch", "roblox story", "gta 6 leak", "ai tools",
+            "lofi hip hop 24/7", "meditation music", "satisfying slime",
+            "life hacks", "prank", "reaction", "mr beast clone"
+        ];
+        const randomTopics = SLOP_TOPICS.sort(() => 0.5 - Math.random()).slice(0, 3);
+        console.log(chalk.magenta(`🎲 Mixing in random topics: ${randomTopics.join(", ")}`));
+
+        console.log(chalk.green(`✅ Found ${trendingIds.size} unique trending channels + 3 topics.`));
         triggerPayload = {
-            seedChannelIds: allIds,
-            targetCount: 100 // Boost target count for manual runs
+            seedChannelIds: Array.from(trendingIds),
+            keywords: randomTopics,
+            targetCount: 150, // Higher target for manual infinite run
         };
 
     } else {
