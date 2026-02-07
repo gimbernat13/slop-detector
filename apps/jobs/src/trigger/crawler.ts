@@ -33,7 +33,13 @@ export const crawler = schedules.task({
                 "minecraft but", "skibidi toilet", "asmr eating", "crypto news",
                 "fortnite glitch", "roblox story", "gta 6 leak", "ai tools",
                 "lofi hip hop 24/7", "meditation music", "satisfying slime",
-                "life hacks", "prank", "reaction", "mr beast clone"
+                "life hacks", "prank", "reaction", "mr beast clone",
+                "ai political news", "election leaks", "government secrets revealed",
+                "breaking political news", "political drama",
+                "finger family nursery rhymes", "bad baby", "toy play videos",
+                "satisfying asmr compilation", "hydraulic press compilation",
+                "chatgpt money glitch", "passive income ai", "ai breaking news 24/7",
+                "shorts funny animals", "unusual memes", "trending challenges"
             ];
 
             // Pick 3 random topics

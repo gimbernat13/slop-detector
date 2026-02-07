@@ -113,6 +113,7 @@ export const SlopTypeSchema = z.enum([
     "ai_voice",
     "background_music",
     "templated_spam",
+    "political_slop",
 ]).nullable();
 
 export const NLPSignalsSchema = z.object({

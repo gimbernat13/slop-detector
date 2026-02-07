@@ -265,7 +265,13 @@ async function main() {
             "minecraft but", "skibidi toilet", "asmr eating", "crypto news",
             "fortnite glitch", "roblox story", "gta 6 leak", "ai tools",
             "lofi hip hop 24/7", "meditation music", "satisfying slime",
-            "life hacks", "prank", "reaction", "mr beast clone"
+            "life hacks", "prank", "reaction", "mr beast clone",
+            "ai political news", "election leaks", "government secrets revealed",
+            "breaking political news", "political drama",
+            "finger family nursery rhymes", "bad baby", "toy play videos",
+            "satisfying asmr compilation", "hydraulic press compilation",
+            "chatgpt money glitch", "passive income ai", "ai breaking news 24/7",
+            "shorts funny animals", "unusual memes", "trending challenges"
         ];
         const randomTopics = SLOP_TOPICS.sort(() => 0.5 - Math.random()).slice(0, 3);
         console.log(chalk.magenta(`🎲 Mixing in random topics: ${randomTopics.join(", ")}`));
@@ -291,6 +297,17 @@ async function main() {
 
     // Optional Filters
     const filterAnswer = await inquirer.prompt([
+        {
+            type: "list",
+            name: "duration",
+            message: chalk.cyan("⏱️  Content Type (Duration):"),
+            choices: [
+                { name: "Any", value: "any" },
+                { name: "Shorts (< 4m)", value: "short" },
+                { name: "Long-form (> 20m)", value: "long" },
+            ],
+            default: "any",
+        },
         {
             type: "number",
             name: "targetCount",
@@ -320,6 +337,7 @@ async function main() {
     // Merge filters into payload
     triggerPayload = {
         ...triggerPayload,
+        duration: filterAnswer.duration,
         targetCount: filterAnswer.targetCount,
         minSubscribers: filterAnswer.minSubscribers,
         minVideos: filterAnswer.minVideos,

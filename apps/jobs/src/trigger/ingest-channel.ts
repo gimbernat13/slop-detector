@@ -12,8 +12,24 @@ export const ingestChannel = task({
     id: "ingest.channel",
     maxDuration: 600, // 10 minutes max
 
-    run: async (payload: { seedChannelIds?: string[]; keywords?: string[]; minSubscribers?: number; minVideos?: number; targetCount?: number; forceFresh?: boolean }) => {
-        const { seedChannelIds = [], keywords = [], minSubscribers = 0, minVideos = 0, targetCount = 100, forceFresh = false } = payload;
+    run: async (payload: {
+        seedChannelIds?: string[];
+        keywords?: string[];
+        minSubscribers?: number;
+        minVideos?: number;
+        targetCount?: number;
+        forceFresh?: boolean;
+        duration?: "long" | "short" | "any";
+    }) => {
+        const {
+            seedChannelIds = [],
+            keywords = [],
+            minSubscribers = 0,
+            minVideos = 0,
+            targetCount = 100,
+            forceFresh = false,
+            duration = "any"
+        } = payload;
 
         console.log(`Starting ingestion. Target: ${targetCount} results.`);
         console.log(`Filters: Min Subs=${minSubscribers}, Min Videos=${minVideos}`);
@@ -74,8 +90,8 @@ export const ingestChannel = task({
 
                             const tokenToUse = keywordTokens[keyword];
 
-                            console.log(`Searching "${keyword}" (Page: ${tokenToUse ? 'Next' : 'First'})...`);
-                            const searchRes = await searchChannelsByTopic(keyword, 50, tokenToUse);
+                            console.log(`Searching "${keyword}" (Page: ${tokenToUse ? 'Next' : 'First'}, Duration: ${duration})...`);
+                            const searchRes = await searchChannelsByTopic(keyword, 50, tokenToUse, duration);
 
                             searchRes.ids.forEach(id => {
                                 if (!visitedIds.has(id)) candidateQueue.add(id);

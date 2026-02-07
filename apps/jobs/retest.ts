@@ -12,17 +12,22 @@ async function retest(handle: string) {
     console.log(`\n🔍 Retesting: ${handle}`);
 
     // 1. Resolve handle to ID (simple search)
-    const { getApiKey } = await import("./src/trigger/lib/youtube.js");
-    const searchUrl = new URL("https://www.googleapis.com/youtube/v3/search");
-    searchUrl.searchParams.set("part", "snippet");
-    searchUrl.searchParams.set("q", handle);
-    searchUrl.searchParams.set("type", "channel");
-    searchUrl.searchParams.set("maxResults", "1");
-    searchUrl.searchParams.set("key", process.env.YOUTUBE_API_KEY!);
+    let channelId: string | undefined;
 
-    const sRes = await fetch(searchUrl.toString());
-    const sData = await sRes.json() as any;
-    const channelId = sData.items?.[0]?.snippet?.channelId;
+    if (handle.startsWith("UC")) {
+        channelId = handle;
+    } else {
+        const searchUrl = new URL("https://www.googleapis.com/youtube/v3/search");
+        searchUrl.searchParams.set("part", "snippet");
+        searchUrl.searchParams.set("q", handle);
+        searchUrl.searchParams.set("type", "channel");
+        searchUrl.searchParams.set("maxResults", "1");
+        searchUrl.searchParams.set("key", process.env.YOUTUBE_API_KEY!);
+
+        const sRes = await fetch(searchUrl.toString());
+        const sData = await sRes.json() as any;
+        channelId = sData.items?.[0]?.snippet?.channelId;
+    }
 
     if (!channelId) {
         console.error(`Could not resolve ${handle}`);
@@ -49,7 +54,7 @@ async function retest(handle: string) {
 
     const result = await classifyChannel(normalized);
     console.log(`\nRESULT: [${result.classification}] Confidence: ${result.confidence}%`);
-    console.log(`Reasoning: ${result.aiAnalysis?.reasoning || result.reasons[0]}`);
+    console.log(`Reasoning: ${result.reasons.join(", ") || result.aiAnalysis?.reasoning}`);
 
     // 4. Persist
     await insertClassification(result);
@@ -57,9 +62,14 @@ async function retest(handle: string) {
 }
 
 async function runAll() {
-    await retest("@JeffGeerling");
-    await retest("@GamersNexus");
-    await retest("@Blippi");
+    const handleRaw = process.argv[2];
+    if (handleRaw) {
+        await retest(handleRaw);
+    } else {
+        await retest("@JeffGeerling");
+        await retest("@GamersNexus");
+        await retest("@Blippi");
+    }
 }
 
 runAll().catch(console.error);

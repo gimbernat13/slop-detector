@@ -84,7 +84,7 @@ export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 
     if (basicVideos.length === 0) return [];
 
     // ENRICHMENT: Fetch rich metadata (madeForKids, tags, duration, viewCount) from videos.list
-    const videoIds = basicVideos.map(v => v.id).join(",");
+    const videoIds = basicVideos.map((v: { id: string }) => v.id).join(",");
     const statusUrl = new URL(`${YOUTUBE_API_BASE}/videos`);
     statusUrl.searchParams.set("part", "snippet,status,contentDetails,statistics");
     statusUrl.searchParams.set("id", videoIds);
@@ -131,12 +131,24 @@ export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 
 // Search channels by topic (High Impact Discovery)
 // ============================================================
 
-export async function searchChannelsByTopic(topic: string, maxResults = 50, pageToken?: string): Promise<{ ids: string[]; nextPageToken?: string }> {
+export async function searchChannelsByTopic(
+    topic: string,
+    maxResults = 50,
+    pageToken?: string,
+    duration: "long" | "short" | "any" = "any"
+): Promise<{ ids: string[]; nextPageToken?: string }> {
     const url = new URL(`${YOUTUBE_API_BASE}/search`);
     url.searchParams.set("part", "snippet");
     url.searchParams.set("q", topic);
     url.searchParams.set("type", "video"); // Search videos to find channels
-    // User wants BIG channels, so we order by viewCount to find the most successful slop
+
+    // Duration filter: "short" (< 4m), "long" (> 20m), "any"
+    if (duration === "short") {
+        url.searchParams.set("videoDuration", "short");
+    } else if (duration === "long") {
+        url.searchParams.set("videoDuration", "long");
+    }
+
     url.searchParams.set("order", "viewCount");
     url.searchParams.set("maxResults", String(maxResults));
     url.searchParams.set("key", getApiKey());
