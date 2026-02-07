@@ -12,41 +12,89 @@ export const ingestChannel = task({
     id: "ingest.channel",
     maxDuration: 600, // 10 minutes max
 
-    run: async (payload: { seedChannelIds: string[]; expandRelated?: boolean }) => {
-        const { seedChannelIds, expandRelated = true } = payload;
+    run: async (payload: { seedChannelIds?: string[]; keywords?: string[]; expandRelated?: boolean; minSubscribers?: number; minVideos?: number }) => {
+        const { seedChannelIds = [], keywords = [], expandRelated = true, minSubscribers = 0, minVideos = 0 } = payload;
 
-        console.log(`Starting ingestion with ${seedChannelIds.length} seed channels`);
+        console.log(`Starting ingestion with ${seedChannelIds.length} seed channels and ${keywords.length} keywords`);
+        console.log(`Filters: Min Subs=${minSubscribers}, Min Videos=${minVideos}`);
 
         // Step 1: Initialize DB schema (idempotent)
         console.log("Step 1: Ensuring database schema...");
         await initializeSchema();
 
-        // Step 2: Snowball expand to find related channels
-        let channelIds = seedChannelIds;
-        if (expandRelated) {
-            console.log("Step 2: Expanding to related channels...");
-            channelIds = await snowballExpand(seedChannelIds, 10, 30);
-            console.log(`Expanded to ${channelIds.length} channels`);
+        // Step 2: Discovery (Mixed Mode)
+        console.log("Step 2: Discovery phase...");
+        const channelIdSet = new Set(seedChannelIds);
+
+        // Mode A: Topic Search (High Impact)
+        if (keywords.length > 0) {
+            const { searchChannelsByTopic } = await import("./lib/youtube");
+            for (const keyword of keywords) {
+                console.log(`Searching for active channels on topic: "${keyword}"...`);
+                const found = await searchChannelsByTopic(keyword, 50);
+                found.forEach(id => channelIdSet.add(id));
+            }
         }
+
+        // Mode B: Snowball (Legacy)
+        if (expandRelated && seedChannelIds.length > 0) {
+            console.log("Expanding related channels...");
+            const expanded = await snowballExpand(seedChannelIds, 10, 30);
+            expanded.forEach(id => channelIdSet.add(id));
+        }
+
+        const channelIds = Array.from(channelIdSet);
+        console.log(`Total unique channels to analyze: ${channelIds.length}`);
 
         // Step 3: Fetch channel metadata in batches
         console.log("Step 3: Fetching channel metadata...");
-        const channels = await fetchChannelMetadata(channelIds.slice(0, 50)); // API limit
+        // Split into chunks of 50
+        const channels = [];
+        for (let i = 0; i < channelIds.length; i += 50) {
+            const chunk = channelIds.slice(i, i + 50);
+            const batch = await fetchChannelMetadata(chunk);
+            channels.push(...batch);
+        }
         console.log(`Fetched metadata for ${channels.length} channels`);
 
         // Step 4-7: Process each channel
         const results = [];
         for (const channel of channels) {
             try {
-                // Fetch recent videos for NLP
-                console.log(`Processing: ${channel.snippet.title}`);
+                // Calculate basic metrics first to Pre-Filter
+                const normalized = normalizeChannel(channel, []); // Pass empty videos first just to get velocity
+
+                // PRE-FILTERS
+
+                // 1. Subscriber Count
+                if (normalized.subscriberCount < minSubscribers) {
+                    console.log(`Skipping ${channel.snippet.title} (Subs: ${normalized.subscriberCount} < ${minSubscribers})`);
+                    continue;
+                }
+
+                // 2. Video Count
+                if (normalized.videoCount < minVideos) {
+                    console.log(`Skipping ${channel.snippet.title} (Videos: ${normalized.videoCount} < ${minVideos})`);
+                    continue;
+                }
+
+                // 3. Low Velocity Check (Hard Rule)
+                // If velocity < 0.5 videos/day (less than 1 video every 2 days), skip.
+                // Exception: If subscriber count > 100k, maybe keep it? optimizing for slop farms.
+                if (normalized.velocity < 0.5) {
+                    console.log(`Skipping ${channel.snippet.title} (Low velocity: ${normalized.velocity.toFixed(2)}/day)`);
+                    continue;
+                }
+
+                // Fetch recent videos for NLP (Only for survivors)
+                console.log(`Processing: ${channel.snippet.title} (Vel: ${normalized.velocity.toFixed(2)})`);
                 const recentVideos = await fetchRecentVideos(channel.id, 10);
 
-                // Normalize
-                const normalized = normalizeChannel(channel, recentVideos);
+                // Re-normalize with videos
+                const fullNormalized = normalizeChannel(channel, recentVideos);
 
                 // Classify (rules first, then AI if needed)
-                const classification = await classifyChannel(normalized);
+                const classification = await classifyChannel(fullNormalized);
 
                 // Store in Neon
                 await insertClassification(classification);

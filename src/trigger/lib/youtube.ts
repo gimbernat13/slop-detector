@@ -137,3 +137,36 @@ export async function snowballExpand(
 
     return Array.from(allChannelIds);
 }
+
+// ============================================================
+// Search channels by topic (High Impact Discovery)
+// ============================================================
+
+export async function searchChannelsByTopic(topic: string, maxResults = 50): Promise<string[]> {
+    const url = new URL(`${YOUTUBE_API_BASE}/search`);
+    url.searchParams.set("part", "snippet");
+    url.searchParams.set("q", topic);
+    url.searchParams.set("type", "video"); // Search videos to find channels
+    // User wants BIG channels, so we order by viewCount to find the most successful slop
+    url.searchParams.set("order", "viewCount");
+    url.searchParams.set("maxResults", String(maxResults));
+    url.searchParams.set("key", getApiKey());
+
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+        throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const items = data.items || [];
+
+    // Extract unique channel IDs
+    const channelIds = new Set<string>();
+    for (const item of items) {
+        if (item.snippet?.channelId) {
+            channelIds.add(item.snippet.channelId);
+        }
+    }
+
+    return Array.from(channelIds);
+}

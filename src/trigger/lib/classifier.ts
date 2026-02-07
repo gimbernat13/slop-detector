@@ -77,7 +77,13 @@ METRICS:
 - Subscribers: ${channel.subscriberCount.toLocaleString()}
 - Views per subscriber: ${channel.viewsPerSub.toFixed(2)}
 
-TASK: Determine if this is AI-generated spam/slop content (lofi streams, AI voice narration, kids content farms, compilation spam, etc.)
+TASK: Determine if this is AI-generated spam/slop content (lofi streams, AI voice narration, algorithmic kids content farms, compilation spam, etc.)
+
+IMPORTANT GUIDELINES:
+1. **Kids Content**: Be careful. High quality, human-animated or educational content (like Cocomelon, PBS Kids style) is OKAY.
+   - SLOP = Weird algorithmic combinations (e.g. "Elsa vs Spiderman Toilet"), repetitive nonsensical titles, low-effort AI animation.
+   - OKAY = Structured stories, educational value, consistent characters.
+2. **AI Voice**: AI narration alone is not slop if the content is high effort. Slop is "Wikipedia reading" or "Reddit reading".
 
 Respond with ONLY valid JSON:
 {
@@ -103,10 +109,18 @@ Respond with ONLY valid JSON:
         const text = result.response.text();
 
         // Parse JSON from response
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("No JSON in response");
+        // Clean up markdown code blocks if present
+        let cleanText = text.replace(/```json\n?|\n?```/g, "").trim();
 
-        const parsed = JSON.parse(jsonMatch[0]);
+        // Find the first '{' and last '}' to handle any preamble/postamble
+        const firstBrace = cleanText.indexOf('{');
+        const lastBrace = cleanText.lastIndexOf('}');
+
+        if (firstBrace !== -1 && lastBrace !== -1) {
+            cleanText = cleanText.substring(firstBrace, lastBrace + 1);
+        }
+
+        const parsed = JSON.parse(cleanText);
 
         return {
             channelId: channel.channelId,
