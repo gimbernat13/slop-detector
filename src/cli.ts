@@ -205,12 +205,16 @@ async function main() {
                     name: `  ${chalk.magenta.bold("🔍 Topic Search")}    ${chalk.gray("→ Find active channels posting about a topic")}`,
                     value: "topic",
                 },
+                {
+                    name: `  ${chalk.yellow.bold("🌊 Trend Surfing")}    ${chalk.gray("→ Ingest Top 50 Trending Channels DIRECTLY")}`,
+                    value: "trending",
+                },
             ],
             loop: false,
         },
     ]);
 
-    let triggerPayload = {};
+    let triggerPayload: any = {};
 
     if (modeAnswer.mode === "snowball") {
         const channelAnswer = await inquirer.prompt([
@@ -223,6 +227,17 @@ async function main() {
         ]);
         const channelId = await parseChannelInput(channelAnswer.input);
         triggerPayload = { seedChannelIds: [channelId], expandRelated: true };
+
+    } else if (modeAnswer.mode === "trending") {
+        console.log(chalk.yellow("🌊 Fetching Top 50 Trending Channels..."));
+        const { fetchTrendingChannelIds } = await import("./trigger/lib/youtube");
+        // Fetch Gaming (20) and Entertainment (24)
+        const textIds = await fetchTrendingChannelIds("24", 25);
+        const gameIds = await fetchTrendingChannelIds("20", 25);
+        const allIds = [...new Set([...textIds, ...gameIds])]; // Unique
+
+        console.log(chalk.green(`✅ Found ${allIds.length} unique trending channels.`));
+        triggerPayload = { seedChannelIds: allIds };
 
     } else {
         const topicAnswer = await inquirer.prompt([

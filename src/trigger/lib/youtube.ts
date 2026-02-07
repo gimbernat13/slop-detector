@@ -201,3 +201,34 @@ export async function fetchTrendingKeywords(categoryId?: string, maxResults = 10
         item.snippet?.title || ""
     ).filter(t => t.length > 0);
 }
+
+export async function fetchTrendingChannelIds(categoryId?: string, maxResults = 50): Promise<string[]> {
+    const url = new URL(`${YOUTUBE_API_BASE}/videos`);
+    url.searchParams.set("part", "snippet");
+    url.searchParams.set("chart", "mostPopular");
+    url.searchParams.set("regionCode", "US");
+    if (categoryId) {
+        url.searchParams.set("videoCategoryId", categoryId);
+    }
+    url.searchParams.set("maxResults", String(maxResults));
+    url.searchParams.set("key", getApiKey());
+
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("YouTube API Error Details:", errorBody);
+        throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const items = data.items || [];
+
+    const channelIds = new Set<string>();
+    for (const item of items) {
+        if (item.snippet?.channelId) {
+            channelIds.add(item.snippet.channelId);
+        }
+    }
+
+    return Array.from(channelIds);
+}

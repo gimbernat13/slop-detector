@@ -59,9 +59,11 @@ function getGeminiClient() {
     return new GoogleGenerativeAI(key);
 }
 
+const genAI = getGeminiClient();
+
 export async function classifyChannel(channel: NormalizedChannel): Promise<ClassificationResult> {
-    const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+    const model = genAI.getGenerativeModel({ model: modelName });
 
     const prompt = `Analyze this YouTube channel and classify it for AI-generated slop/spam content.
 
