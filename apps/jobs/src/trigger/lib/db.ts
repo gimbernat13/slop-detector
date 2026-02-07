@@ -35,6 +35,7 @@ export async function insertClassification(result: ClassificationResult) {
         contentType: result.aiAnalysis?.nlpSignals.contentType ?? null,
         reasons: result.reasons,
         recentVideos: result.recentVideos,
+        latestVideoId: result.latestVideoId,
         aiReasoning: result.aiAnalysis?.reasoning ?? null,
         humanReviewStatus: "pending",
     }).onConflictDoUpdate({
@@ -50,6 +51,7 @@ export async function insertClassification(result: ClassificationResult) {
             viewsPerSub: result.metrics.viewsPerSub,
             reasons: result.reasons,
             recentVideos: result.recentVideos,
+            latestVideoId: result.latestVideoId,
             aiReasoning: result.aiAnalysis?.reasoning ?? null,
         }
     });

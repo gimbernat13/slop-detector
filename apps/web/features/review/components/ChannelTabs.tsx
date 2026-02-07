@@ -1,6 +1,3 @@
-"use client";
-
-import { useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ChannelTabsProps {
@@ -10,25 +7,13 @@ interface ChannelTabsProps {
         suspicious: number;
         okay: number;
     };
+    currentFilter: string;
+    onFilterChange: (filter: any) => void;
 }
 
-export function ChannelTabs({ counts }: ChannelTabsProps) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const currentFilter = searchParams.get("filter") || "all";
-
-    const handleTabChange = (value: string) => {
-        const params = new URLSearchParams(searchParams.toString());
-        if (value === "all") {
-            params.delete("filter");
-        } else {
-            params.set("filter", value);
-        }
-        router.push(`?${params.toString()}`);
-    };
-
+export function ChannelTabs({ counts, currentFilter, onFilterChange }: ChannelTabsProps) {
     return (
-        <Tabs value={currentFilter} onValueChange={handleTabChange} className="w-full">
+        <Tabs value={currentFilter} onValueChange={onFilterChange} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="all" className="gap-2">
                     All

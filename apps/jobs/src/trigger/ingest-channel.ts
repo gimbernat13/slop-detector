@@ -1,7 +1,7 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { fetchChannelMetadata, fetchRecentVideos } from "./lib/youtube.js";
 import { normalizeChannel } from "@slop-detector/shared";
-import { classifyChannel } from "./lib/classifier.js";
+import { classifyChannel, classifyByRules } from "./lib/classifier.js";
 import { insertClassification } from "./lib/db.js";
 
 // ============================================================
@@ -12,8 +12,8 @@ export const ingestChannel = task({
     id: "ingest.channel",
     maxDuration: 600, // 10 minutes max
 
-    run: async (payload: { seedChannelIds?: string[]; keywords?: string[]; minSubscribers?: number; minVideos?: number; targetCount?: number }) => {
-        const { seedChannelIds = [], keywords = [], minSubscribers = 0, minVideos = 0, targetCount = 100 } = payload;
+    run: async (payload: { seedChannelIds?: string[]; keywords?: string[]; minSubscribers?: number; minVideos?: number; targetCount?: number; forceFresh?: boolean }) => {
+        const { seedChannelIds = [], keywords = [], minSubscribers = 0, minVideos = 0, targetCount = 100, forceFresh = false } = payload;
 
         console.log(`Starting ingestion. Target: ${targetCount} results.`);
         console.log(`Filters: Min Subs=${minSubscribers}, Min Videos=${minVideos}`);
@@ -117,10 +117,15 @@ export const ingestChannel = task({
             batchIds.forEach(id => candidateQueue.delete(id)); // Remove from queue
             batchIds.forEach(id => visitedIds.add(id)); // Mark visited
 
-            // 1. Filter Existing in DB
-            const existingIds = await getExistingChannelIds(batchIds);
-            const newChannelIds = batchIds.filter(id => !existingIds.has(id));
-            skippedExisting += existingIds.size;
+            // 1. Filter Existing in DB (unless forceFresh is true)
+            let newChannelIds = batchIds;
+            if (!forceFresh) {
+                const existingIds = await getExistingChannelIds(batchIds);
+                newChannelIds = batchIds.filter(id => !existingIds.has(id));
+                skippedExisting += existingIds.size;
+            } else {
+                console.log(`Force fresh enabled. Reprocessing ${batchIds.length} candidates...`);
+            }
 
             if (newChannelIds.length === 0) {
                 console.log("All candidates in this batch were duplicates. Skipping fetch.");
@@ -137,31 +142,35 @@ export const ingestChannel = task({
                 if (shouldStop()) break;
 
                 try {
-                    const normalized = normalizeChannel(channel, []);
+                    const normalizedPreview = normalizeChannel(channel, []);
 
                     // Pre-Filters
-                    if (normalized.subscriberCount < minSubscribers) {
+                    if (normalizedPreview.subscriberCount < minSubscribers) {
                         skippedLowSubs++;
                         continue;
                     }
-                    if (normalized.videoCount < minVideos) {
+                    if (normalizedPreview.videoCount < minVideos) {
                         skippedLowVideos++;
                         continue;
                     }
                     // Low Velocity Check (< 0.1/day = ~1 video every 10 days)
-                    if (normalized.velocity < 0.1) {
+                    if (normalizedPreview.velocity < 0.1) {
                         skippedLowVelocity++;
                         continue;
                     }
 
                     console.log(`Analyzing: ${channel.snippet.title}`);
                     const uploadsPlaylistId = channel.contentDetails?.relatedPlaylists?.uploads;
-                    const recentVideos = uploadsPlaylistId
+                    const recentVideosData = uploadsPlaylistId
                         ? await fetchRecentVideos(uploadsPlaylistId, 10)
                         : [];
 
-                    const fullNormalized = normalizeChannel(channel, recentVideos);
-                    const classification = await classifyChannel(fullNormalized);
+                    const recentVideoTitles = recentVideosData.map(v => v.title);
+                    const latestVideoId = recentVideosData.length > 0 ? recentVideosData[0].id : undefined;
+
+                    const normalized = normalizeChannel(channel, recentVideoTitles, latestVideoId);
+
+                    const classification = await classifyChannel(normalized);
 
                     await insertClassification(classification);
 

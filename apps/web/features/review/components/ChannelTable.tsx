@@ -29,6 +29,8 @@ export function ChannelTable({ channels }: ChannelTableProps) {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Channel</TableHead>
+                        <TableHead>Subscribers</TableHead>
+                        <TableHead>Views</TableHead>
                         <TableHead>Classification</TableHead>
                         <TableHead>Score</TableHead>
                         <TableHead>Type</TableHead>

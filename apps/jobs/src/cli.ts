@@ -233,13 +233,28 @@ async function main() {
     if (modeAnswer.mode === "trending") {
         console.log(chalk.yellow("🌊 Fetching Top 50 Trending Channels..."));
         const { fetchTrendingChannelIds } = await import("./trigger/lib/youtube.js");
-        // Fetch Gaming (20) and Entertainment (24)
-        const { ids: textIds } = await fetchTrendingChannelIds("24", 25);
-        const { ids: gameIds } = await fetchTrendingChannelIds("20", 25);
-        const allIds = [...new Set([...textIds, ...gameIds])]; // Unique
+        // Fetch Gaming (20), Entertainment (24), Film (1), People (22), Tech (28)
+        const [gaming, entertainment, film, people, tech] = await Promise.all([
+            fetchTrendingChannelIds("20", 15),
+            fetchTrendingChannelIds("24", 15),
+            fetchTrendingChannelIds("1", 15),
+            fetchTrendingChannelIds("22", 15),
+            fetchTrendingChannelIds("28", 15)
+        ]);
+
+        const allIds = [...new Set([
+            ...gaming.ids,
+            ...entertainment.ids,
+            ...film.ids,
+            ...people.ids,
+            ...tech.ids
+        ])];
 
         console.log(chalk.green(`✅ Found ${allIds.length} unique trending channels.`));
-        triggerPayload = { seedChannelIds: allIds };
+        triggerPayload = {
+            seedChannelIds: allIds,
+            targetCount: 100 // Boost target count for manual runs
+        };
 
     } else {
         const topicAnswer = await inquirer.prompt([
@@ -273,6 +288,12 @@ async function main() {
             message: chalk.cyan("🎥 Min Video Count (filter new channels):"),
             default: 10,
         },
+        {
+            type: "confirm",
+            name: "forceFresh",
+            message: chalk.red("🔥 Force Fresh? (Reprocess existing channels)"),
+            default: false,
+        },
     ]);
 
     // Merge filters into payload
@@ -281,6 +302,7 @@ async function main() {
         targetCount: filterAnswer.targetCount,
         minSubscribers: filterAnswer.minSubscribers,
         minVideos: filterAnswer.minVideos,
+        forceFresh: filterAnswer.forceFresh,
     };
 
     // Trigger the task

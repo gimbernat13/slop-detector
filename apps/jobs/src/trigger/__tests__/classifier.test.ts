@@ -16,6 +16,7 @@ function createChannel(overrides: Partial<NormalizedChannel> = {}): NormalizedCh
         ageInDays: 100,
         viewsPerSub: 10,
         recentVideos: [],
+        latestVideoId: undefined,
         ...overrides,
     };
 }
@@ -71,3 +72,4 @@ describe("classifyByRules", () => {
         expect(result).toBeNull();
     });
 });
+

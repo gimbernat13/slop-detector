@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
     Select,
@@ -27,25 +28,46 @@ export function ReviewActions({ channelId, currentStatus }: ReviewActionsProps) 
     const [flagReason, setFlagReason] = useState("");
 
     const handleConfirm = () => {
-        startTransition(async () => {
-            await confirmChannel(channelId);
-        });
+        toast.promise(
+            async () => {
+                await confirmChannel(channelId);
+            },
+            {
+                loading: "Confirming...",
+                success: "Channel confirmed",
+                error: "Failed to confirm channel",
+            }
+        );
     };
 
     const handleOverride = (newClassification: string) => {
-        startTransition(async () => {
-            await overrideChannel(channelId, newClassification as "SLOP" | "SUSPICIOUS" | "OKAY");
-            setShowOverride(false);
-        });
+        toast.promise(
+            async () => {
+                await overrideChannel(channelId, newClassification as "SLOP" | "SUSPICIOUS" | "OKAY");
+                setShowOverride(false);
+            },
+            {
+                loading: "Updating classification...",
+                success: "Classification updated",
+                error: "Failed to update classification",
+            }
+        );
     };
 
     const handleFlag = () => {
         if (!flagReason.trim()) return;
-        startTransition(async () => {
-            await flagChannel(channelId, flagReason);
-            setShowFlag(false);
-            setFlagReason("");
-        });
+        toast.promise(
+            async () => {
+                await flagChannel(channelId, flagReason);
+                setShowFlag(false);
+                setFlagReason("");
+            },
+            {
+                loading: "Flagging channel...",
+                success: "Channel flagged",
+                error: "Failed to flag channel",
+            }
+        );
     };
 
     if (currentStatus === "confirmed" || currentStatus === "overridden") {

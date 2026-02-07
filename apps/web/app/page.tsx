@@ -1,20 +1,13 @@
-import { getChannels, getStats, ChannelTable, StatsDonut } from "@/features/review";
-import { ChannelTabs } from "@/features/review/components/ChannelTabs";
+import { getChannels, getStats, StatsDonut } from "@/features/review";
+import { DashboardClient } from "@/features/review/components/DashboardClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Classification } from "@slop-detector/shared";
 
 export const dynamic = "force-dynamic";
 
-interface PageProps {
-  searchParams: Promise<{ filter?: string }>;
-}
-
-export default async function DashboardPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const filter = params.filter as Classification | undefined;
-
+export default async function DashboardPage() {
+  // Fetch all channels for client-side filtering
   const [channels, stats] = await Promise.all([
-    getChannels(filter),
+    getChannels(),
     getStats(),
   ]);
 
@@ -66,6 +59,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 <CardTitle className="text-lg">Classification Breakdown</CardTitle>
               </CardHeader>
               <CardContent>
+                {/* We can import StatsDonut here if needed, or pass it to DashboardClient. 
+                    Kept server-side for now as it's static. 
+                    Wait, StatsDonut was imported from @/features/review, let's keep it if we can. 
+                    I need to re-import StatsDonut here or move it to DashboardClient. 
+                    Let's import it.
+                */}
                 <StatsDonut stats={stats} />
               </CardContent>
             </Card>
@@ -97,15 +96,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
           {/* Channel Table */}
           <div className="xl:col-span-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Channels for Review</CardTitle>
-                <ChannelTabs counts={counts} />
-              </CardHeader>
-              <CardContent>
-                <ChannelTable channels={channels} />
-              </CardContent>
-            </Card>
+            <DashboardClient channels={channels} counts={counts} />
           </div>
         </div>
       </main>

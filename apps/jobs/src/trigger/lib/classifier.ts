@@ -78,6 +78,7 @@ export function classifyByRules(channel: NormalizedChannel): ClassificationResul
             metrics: getMetrics(channel),
             reasons: ["High velocity (>10 videos/day)"],
             recentVideos: channel.recentVideos,
+            latestVideoId: channel.latestVideoId,
         };
     }
 
@@ -102,45 +103,15 @@ export function classifyByRules(channel: NormalizedChannel): ClassificationResul
             metrics: getMetrics(channel),
             reasons: ["High velocity (>5/day) with spam keywords"],
             recentVideos: channel.recentVideos,
+            latestVideoId: channel.latestVideoId,
         };
     }
 
-    // 2. OKAY RULES
-    // Velocity < 0.5/day (1 video every 2 days) = OKAY (usually)
-    if (channel.velocity < 0.5) {
-        return {
-            channelId: channel.channelId,
-            title: channel.title,
-            description: channel.description,
-            thumbnailUrl: channel.thumbnailUrl,
-            classification: "OKAY",
-            confidence: 80,
-            slopScore: 10,
-            slopType: null,
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["Low upload velocity (<0.5/day)"],
-            recentVideos: channel.recentVideos,
-        };
-    }
+    // 2. OKAY RULES - REMOVED
+    // User feedback: Rules were too lenient.
+    // We will let the AI decide for "normal" looking channels to avoid false negatives.
 
-    // High Engagement > 50 views per sub = OKAY (Viral/Quality)
-    if (channel.viewsPerSub > 50) {
-        return {
-            channelId: channel.channelId,
-            title: channel.title,
-            description: channel.description,
-            thumbnailUrl: channel.thumbnailUrl,
-            classification: "OKAY",
-            confidence: 85,
-            slopScore: 5,
-            slopType: null,
-            method: "rule",
-            metrics: getMetrics(channel),
-            reasons: ["High engagement (>50 views/subscriber)"],
-            recentVideos: channel.recentVideos,
-        };
-    }
+    // Only keeping obvious SLOP rules.
 
     return null; // No rule match -> Send to AI
 }
@@ -177,7 +148,6 @@ export async function classifyChannel(channel: NormalizedChannel): Promise<Class
 
     const prompt = `Analyze this YouTube channel and classify it for AI-generated slop/spam content.
 
-CHANNEL:
 - Title: "${channel.title}"
 - Description: "${channel.description.slice(0, 500)}"
 - Recent Video Titles: ${channel.recentVideos.slice(0, 10).map(v => `"${v}"`).join(", ")}
@@ -192,10 +162,10 @@ METRICS:
 TASK: Determine if this is AI-generated spam/slop content (lofi streams, AI voice narration, algorithmic kids content farms, compilation spam, etc.)
 
 IMPORTANT GUIDELINES:
-1. **Kids Content**: Be careful. High quality, human-animated or educational content (like Cocomelon, PBS Kids style) is OKAY.
-   - SLOP = Weird algorithmic combinations (e.g. "Elsa vs Spiderman Toilet"), repetitive nonsensical titles, low-effort AI animation.
-   - OKAY = Structured stories, educational value, consistent characters.
-2. **AI Voice**: AI narration alone is not slop if the content is high effort. Slop is "Wikipedia reading" or "Reddit reading".
+    - OKAY = Structured stories, educational value, consistent characters, high production value.
+    - Mixed/Unsure = SUSPICIOUS using slop tactics.
+2. **AI Voice**: AI narration alone is not slop if the content is high effort. Slop is "Wikipedia reading", "Reddit reading", or "Low effort compilations".
+3. **Be STRICT**: If it looks like a content farm, it probably is. Lean towards SUSPICIOUS or SLOP if in doubt.
 
 Respond with ONLY valid JSON:
 {
@@ -247,6 +217,7 @@ Respond with ONLY valid JSON:
             },
             reasons: [parsed.reasoning],
             recentVideos: channel.recentVideos,
+            latestVideoId: channel.latestVideoId,
         };
     } catch (error) {
         console.error("AI classification failed:", error);
@@ -269,6 +240,7 @@ Respond with ONLY valid JSON:
             },
             reasons: [`AI classification failed: ${error}`],
             recentVideos: channel.recentVideos,
+            latestVideoId: channel.latestVideoId,
         };
     }
 }

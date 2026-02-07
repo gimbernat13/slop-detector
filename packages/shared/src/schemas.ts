@@ -62,6 +62,8 @@ export const NormalizedChannelSchema = z.object({
     description: z.string(),
     publishedAt: z.string(),
     thumbnailUrl: z.string().optional(),
+    latestVideoId: z.string().optional(),
+
 
     // Statistics
     videoCount: z.number(),
@@ -109,6 +111,7 @@ export const ClassificationResultSchema = z.object({
     title: z.string(),
     description: z.string().optional(),
     thumbnailUrl: z.string().optional(),
+    latestVideoId: z.string().optional(),
 
     // Classification
     classification: ClassificationSchema,

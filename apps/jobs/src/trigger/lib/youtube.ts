@@ -53,7 +53,7 @@ const PlaylistItemSchema = z.object({
     }),
 });
 
-export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 10): Promise<string[]> {
+export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 10): Promise<{ id: string, title: string }[]> {
     if (!uploadsPlaylistId) return [];
 
     const url = new URL(`${YOUTUBE_API_BASE}/playlistItems`);
@@ -75,11 +75,14 @@ export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 
     return items.map((item: unknown) => {
         try {
             const parsed = PlaylistItemSchema.parse(item);
-            return parsed.snippet.title;
+            return {
+                id: parsed.snippet.resourceId.videoId,
+                title: parsed.snippet.title,
+            };
         } catch {
-            return "Untitled";
+            return { id: "", title: "Untitled" }; // Filtered out later
         }
-    });
+    }).filter((v: { id: string; title: string }) => v.id !== "");
 }
 
 // ============================================================

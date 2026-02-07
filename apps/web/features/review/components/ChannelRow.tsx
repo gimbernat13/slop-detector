@@ -41,7 +41,7 @@ export function ChannelRow({ channel }: ChannelRowProps) {
                             href={`https://youtube.com/channel/${channel.channelId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:underline text-blue-500 font-semibold"
+                            className="hover:underline text-blue-500 font-semibold truncate max-w-[200px] md:max-w-[300px]"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {channel.title}
@@ -49,8 +49,15 @@ export function ChannelRow({ channel }: ChannelRowProps) {
                     </div>
                 </TableCell>
                 <TableCell>
+                    {formatNumber(channel.subscriberCount)}
+                </TableCell>
+                <TableCell>
+                    {formatNumber(channel.viewCount)}
+                </TableCell>
+                <TableCell>
                     <ClassificationBadge classification={channel.classification} />
                 </TableCell>
+
                 <TableCell>
                     <span
                         className={
@@ -83,7 +90,7 @@ export function ChannelRow({ channel }: ChannelRowProps) {
 
             {isOpen && (
                 <TableRow className="bg-muted/30 border-b-0">
-                    <TableCell colSpan={7} className="py-4">
+                    <TableCell colSpan={7} className="py-4 whitespace-normal">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-4">
                             {/* Stats */}
                             <div className="space-y-3">
@@ -156,6 +163,22 @@ export function ChannelRow({ channel }: ChannelRowProps) {
                             {/* Recent Videos */}
                             <div className="space-y-3">
                                 <h4 className="text-sm font-semibold text-muted-foreground">Recent Videos</h4>
+                                {channel.latestVideoId && (
+                                    <div className="mb-2">
+                                        <a
+                                            href={`https://www.youtube.com/watch?v=${channel.latestVideoId}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block hover:opacity-80 transition-opacity"
+                                        >
+                                            <img
+                                                src={`https://i.ytimg.com/vi/${channel.latestVideoId}/mqdefault.jpg`}
+                                                alt="Latest Video"
+                                                className="w-full h-auto object-cover rounded-md border aspect-video"
+                                            />
+                                        </a>
+                                    </div>
+                                )}
                                 <div className="space-y-1 text-sm max-h-32 overflow-y-auto">
                                     {channel.recentVideos && channel.recentVideos.length > 0 ? (
                                         channel.recentVideos.slice(0, 5).map((video, i) => (

@@ -1,79 +1,60 @@
 import { schedules, tasks } from "@trigger.dev/sdk/v3";
-import { SLOP_TOPICS, TRENDING_CATEGORIES } from "./lib/topics.js";
-import { fetchTrendingKeywords } from "./lib/youtube.js";
+import { fetchTrendingChannelIds } from "./lib/youtube.js";
 
 // ============================================================
-// Hourly Crawler Task
+// Hourly Trend Surfing Crawler
 // ============================================================
 
 export const crawler = schedules.task({
     id: "crawler.trending",
-    // cron: "0 * * * *", // Run every hour (Disabled for Demo)
-    // cron: "0 0 31 2 *", // February 31st trick failed build validation
-    cron: "0 0 1 1 1", // Valid cron (Monday, Jan 1st at 00:00) but effectively disabled for demo purposes if we don't start the schedule
+    cron: "0 * * * *", // Run every hour
     maxDuration: 300, // 5 minutes to decide and trigger
 
     run: async (payload) => {
-        console.log("🕷️ Crawler waking up...");
-        const date = new Date(payload.timestamp);
-
-        let targetKeywords: string[] = [];
-        let method = "static";
-
-        // Strategy: 10% Trending, 90% Static Slop (for better demo results)
-        // This ensures we find garbage most of the time
-        const coinFlip = Math.random() > 0.9;
+        console.log("🌊 Trend Surfer waking up...");
 
         try {
-            if (coinFlip) {
-                // Method A: Dynamic Trends (The "Zeitgeist")
-                console.log("🎲 Strategy: Trending Videos");
-                method = "trending";
+            // 1. Trending Fetch (The "Base Layer")
+            console.log("Fetching Top 50 Trending Channels across 5 categories...");
+            const [gaming, entertainment, film, people, tech] = await Promise.all([
+                fetchTrendingChannelIds("20", 50),
+                fetchTrendingChannelIds("24", 50),
+                fetchTrendingChannelIds("1", 50),
+                fetchTrendingChannelIds("22", 50),
+                fetchTrendingChannelIds("28", 50)
+            ]);
 
-                // Fetch trending from Gaming (20) or Entertainment (24)
-                // Randomly pick one
-                const category = Math.random() > 0.5
-                    ? TRENDING_CATEGORIES.GAMING
-                    : TRENDING_CATEGORIES.ENTERTAINMENT;
+            const trendingIds = new Set([
+                ...gaming.ids, ...entertainment.ids, ...film.ids, ...people.ids, ...tech.ids
+            ]);
 
-                const trends = await fetchTrendingKeywords(category, 10);
+            // 2. Topic Rotation (The "Infinite Layer")
+            const SLOP_TOPICS = [
+                "minecraft but", "skibidi toilet", "asmr eating", "crypto news",
+                "fortnite glitch", "roblox story", "gta 6 leak", "ai tools",
+                "lofi hip hop 24/7", "meditation music", "satisfying slime",
+                "life hacks", "prank", "reaction", "mr beast clone"
+            ];
 
-                // Pick 3 random trending titles to search for
-                // (searching all 10 might be too expensive/noisy)
-                targetKeywords = trends
-                    .sort(() => 0.5 - Math.random())
-                    .slice(0, 3);
+            // Pick 3 random topics
+            const randomTopics = SLOP_TOPICS.sort(() => 0.5 - Math.random()).slice(0, 3);
+            console.log(`🎲 Rotating Topics: ${randomTopics.join(", ")}`);
 
-                console.log(`Found trending keywords: ${targetKeywords.join(", ")}`);
-            } else {
-                // Method B: Static Slop (The "Safety Net")
-                console.log("🎲 Strategy: Static Topics");
-                method = "static";
-
-                // Pick 1 random topic
-                const randomTopic = SLOP_TOPICS[Math.floor(Math.random() * SLOP_TOPICS.length)];
-                targetKeywords = [randomTopic];
-            }
-
-            // Fallback if trends failed
-            if (targetKeywords.length === 0) {
-                console.log("⚠️ No keywords found, falling back to emergency static topic.");
-                targetKeywords = ["Skibidi Toilet"];
-            }
-
-            // Trigger Ingestion
-            console.log(`🚀 Triggering ingest for: ${targetKeywords.join(", ")}`);
-
+            // Trigger Ingestion with Seeds + Topics
             await tasks.trigger("ingest.channel", {
-                keywords: targetKeywords,
-                minSubscribers: 1000, // Filter out absolute noise
-                minVideos: 10         // Filter out brand new spam
+                seedChannelIds: Array.from(trendingIds),
+                keywords: randomTopics, // Ingest will search these pages
+                minSubscribers: 0,
+                minVideos: 5,
+                targetCount: 150, // Higher target for combo run
+                forceFresh: false // Let DB filter duplicates, but topics will find new ones
             });
 
             return {
                 status: "success",
-                method,
-                keywords: targetKeywords
+                method: "hybrid_crawler",
+                count: trendingIds.size,
+                topics: randomTopics
             };
 
         } catch (error) {

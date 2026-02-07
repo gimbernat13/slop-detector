@@ -5,7 +5,8 @@ import type { YouTubeChannel, NormalizedChannel } from "./types";
  */
 export function normalizeChannel(
     raw: YouTubeChannel,
-    recentVideos: string[]
+    recentVideos: string[],
+    latestVideoId?: string
 ): NormalizedChannel {
     const publishedAt = new Date(raw.snippet.publishedAt);
     const now = new Date();
@@ -21,6 +22,8 @@ export function normalizeChannel(
         description: raw.snippet.description,
         publishedAt: raw.snippet.publishedAt,
         thumbnailUrl: raw.snippet.thumbnails?.default?.url,
+        latestVideoId,
+
 
         videoCount,
         subscriberCount,

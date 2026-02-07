@@ -38,6 +38,7 @@ export const channels = pgTable('channels', {
     contentType: text('content_type'),
     reasons: text('reasons').array(),
     recentVideos: text('recent_videos').array(),
+    latestVideoId: text('latest_video_id'),
     aiReasoning: text('ai_reasoning'),
 
     // Human review fields
