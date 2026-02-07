@@ -1,4 +1,5 @@
-import { YouTubeChannelSchema, YouTubeSearchResultSchema, type YouTubeChannel } from "./schema";
+import { YouTubeChannelSchema, YouTubeSearchResultSchema, type YouTubeChannel } from "./schema.js";
+import { z } from "zod";
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
@@ -19,7 +20,7 @@ export async function fetchChannelMetadata(channelIds: string[]): Promise<YouTub
     }
 
     const url = new URL(`${YOUTUBE_API_BASE}/channels`);
-    url.searchParams.set("part", "snippet,statistics");
+    url.searchParams.set("part", "snippet,statistics,contentDetails");
     url.searchParams.set("id", channelIds.join(","));
     url.searchParams.set("key", getApiKey());
 
@@ -28,7 +29,7 @@ export async function fetchChannelMetadata(channelIds: string[]): Promise<YouTub
         throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const items = data.items || [];
 
     return items.map((item: unknown) => YouTubeChannelSchema.parse(item));
@@ -47,7 +48,7 @@ export async function fetchRelatedChannels(channelId: string, maxResults = 20): 
     const channel = await fetchChannelMetadata([channelId]);
     if (channel.length === 0) return [];
 
-    const searchQuery = channel[0].snippet.title.split(" ").slice(0, 3).join(" ");
+    const searchQuery = `"${channel[0].snippet.title}" "compilation"`;
 
     const url = new URL(`${YOUTUBE_API_BASE}/search`);
     url.searchParams.set("part", "snippet");
@@ -61,7 +62,7 @@ export async function fetchRelatedChannels(channelId: string, maxResults = 20): 
         throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const items = data.items || [];
 
     // Extract channel IDs, excluding the original
@@ -82,32 +83,45 @@ export async function fetchRelatedChannels(channelId: string, maxResults = 20): 
 }
 
 // ============================================================
-// Fetch recent videos for a channel (for NLP analysis)
+// Fetch recent videos for a channel (using playlistItems = 1 quota unit)
 // ============================================================
 
-export async function fetchRecentVideos(channelId: string, maxResults = 10): Promise<string[]> {
-    const url = new URL(`${YOUTUBE_API_BASE}/search`);
+const PlaylistItemSchema = z.object({
+    snippet: z.object({
+        title: z.string(),
+        resourceId: z.object({
+            videoId: z.string(),
+        }),
+    }),
+});
+
+export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 10): Promise<string[]> {
+    if (!uploadsPlaylistId) return [];
+
+    const url = new URL(`${YOUTUBE_API_BASE}/playlistItems`);
     url.searchParams.set("part", "snippet");
-    url.searchParams.set("channelId", channelId);
-    url.searchParams.set("type", "video");
-    url.searchParams.set("order", "date");
+    url.searchParams.set("playlistId", uploadsPlaylistId);
     url.searchParams.set("maxResults", String(maxResults));
     url.searchParams.set("key", getApiKey());
 
     const response = await fetch(url.toString());
     if (!response.ok) {
-        // Some channels might have search disabled
-        console.warn(`Could not fetch videos for ${channelId}: ${response.status}`);
+        console.warn(`Could not fetch videos for playlist ${uploadsPlaylistId}: ${response.status}`);
         return [];
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const items = data.items || [];
 
     // Extract video titles
-    return items.map((item: { snippet?: { title?: string } }) =>
-        item.snippet?.title || "Untitled"
-    );
+    return items.map((item: unknown) => {
+        try {
+            const parsed = PlaylistItemSchema.parse(item);
+            return parsed.snippet.title;
+        } catch {
+            return "Untitled";
+        }
+    });
 }
 
 // ============================================================
@@ -142,7 +156,7 @@ export async function snowballExpand(
 // Search channels by topic (High Impact Discovery)
 // ============================================================
 
-export async function searchChannelsByTopic(topic: string, maxResults = 50): Promise<string[]> {
+export async function searchChannelsByTopic(topic: string, maxResults = 50, pageToken?: string): Promise<{ ids: string[]; nextPageToken?: string }> {
     const url = new URL(`${YOUTUBE_API_BASE}/search`);
     url.searchParams.set("part", "snippet");
     url.searchParams.set("q", topic);
@@ -151,13 +165,16 @@ export async function searchChannelsByTopic(topic: string, maxResults = 50): Pro
     url.searchParams.set("order", "viewCount");
     url.searchParams.set("maxResults", String(maxResults));
     url.searchParams.set("key", getApiKey());
+    if (pageToken) {
+        url.searchParams.set("pageToken", pageToken);
+    }
 
     const response = await fetch(url.toString());
     if (!response.ok) {
         throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const items = data.items || [];
 
     // Extract unique channel IDs
@@ -168,7 +185,10 @@ export async function searchChannelsByTopic(topic: string, maxResults = 50): Pro
         }
     }
 
-    return Array.from(channelIds);
+    return {
+        ids: Array.from(channelIds),
+        nextPageToken: data.nextPageToken
+    };
 }
 
 // ============================================================
@@ -191,7 +211,7 @@ export async function fetchTrendingKeywords(categoryId?: string, maxResults = 10
         throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const items = data.items || [];
 
     // Extract titles and clean them up
@@ -199,10 +219,10 @@ export async function fetchTrendingKeywords(categoryId?: string, maxResults = 10
     // But for "Slop", the video titles ARE the keywords (e.g. "GTA 6 Trailer")
     return items.map((item: { snippet?: { title?: string } }) =>
         item.snippet?.title || ""
-    ).filter(t => t.length > 0);
+    ).filter((t: string) => t.length > 0);
 }
 
-export async function fetchTrendingChannelIds(categoryId?: string, maxResults = 50): Promise<string[]> {
+export async function fetchTrendingChannelIds(categoryId?: string, maxResults = 50): Promise<{ ids: string[]; nextPageToken?: string }> {
     const url = new URL(`${YOUTUBE_API_BASE}/videos`);
     url.searchParams.set("part", "snippet");
     url.searchParams.set("chart", "mostPopular");
@@ -220,7 +240,7 @@ export async function fetchTrendingChannelIds(categoryId?: string, maxResults = 
         throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const items = data.items || [];
 
     const channelIds = new Set<string>();
@@ -230,5 +250,8 @@ export async function fetchTrendingChannelIds(categoryId?: string, maxResults = 
         }
     }
 
-    return Array.from(channelIds);
+    return {
+        ids: Array.from(channelIds),
+        nextPageToken: data.nextPageToken
+    };
 }

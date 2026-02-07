@@ -69,7 +69,7 @@ async function resolveHandle(handle: string): Promise<string | null> {
     const response = await fetch(url.toString());
     if (!response.ok) return null;
 
-    const data = await response.json();
+    const data = await response.json() as any;
     return data.items?.[0]?.snippet?.channelId || null;
 }
 
@@ -99,6 +99,10 @@ async function parseChannelInput(input: string): Promise<string> {
 // Display Results with Style
 // ============================================================
 
+// ============================================================
+// Display Results with Style
+// ============================================================
+
 interface ClassificationResult {
     channelId: string;
     title: string;
@@ -107,22 +111,45 @@ interface ClassificationResult {
     confidence: number;
 }
 
-function displayResults(results: ClassificationResult[]) {
-    const slop = results.filter(r => r.classification === "SLOP").length;
-    const suspicious = results.filter(r => r.classification === "SUSPICIOUS").length;
-    const okay = results.filter(r => r.classification === "OKAY").length;
+interface RunSummary {
+    total: number;
+    slop: number;
+    suspicious: number;
+    okay: number;
+    skipped?: {
+        existing: number;
+        lowSubs: number;
+        lowVideos: number;
+        lowVelocity: number;
+    };
+}
+
+function displayResults(results: ClassificationResult[], summary?: RunSummary) {
+    const slop = summary?.slop ?? results.filter(r => r.classification === "SLOP").length;
+    const suspicious = summary?.suspicious ?? results.filter(r => r.classification === "SUSPICIOUS").length;
+    const okay = summary?.okay ?? results.filter(r => r.classification === "OKAY").length;
 
     console.log("\n");
 
     // Summary box
-    const summaryText = [
+    const summaryLines = [
         `${chalk.bold("📊 Analysis Complete")}`,
         "",
         `   Total Analyzed: ${chalk.cyan.bold(results.length)}`,
         `   ${slopGradient("🚨 SLOP:")} ${chalk.red.bold(slop)}`,
         `   ${chalk.yellow("⚠️  SUSPICIOUS:")} ${chalk.yellow.bold(suspicious)}`,
         `   ${okGradient("✅ OKAY:")} ${chalk.green.bold(okay)}`,
-    ].join("\n");
+    ];
+
+    if (summary?.skipped) {
+        summaryLines.push("");
+        summaryLines.push(chalk.gray("   --- Skipped ---"));
+        summaryLines.push(`   Done/Duplicate: ${chalk.gray(summary.skipped.existing)}`);
+        summaryLines.push(`   Low Velocity:   ${chalk.gray(summary.skipped.lowVelocity)}`);
+        summaryLines.push(`   Small/New:      ${chalk.gray(summary.skipped.lowSubs + summary.skipped.lowVideos)}`);
+    }
+
+    const summaryText = summaryLines.join("\n");
 
     console.log(boxen(summaryText, {
         padding: 1,
@@ -230,10 +257,10 @@ async function main() {
 
     } else if (modeAnswer.mode === "trending") {
         console.log(chalk.yellow("🌊 Fetching Top 50 Trending Channels..."));
-        const { fetchTrendingChannelIds } = await import("./trigger/lib/youtube");
+        const { fetchTrendingChannelIds } = await import("./trigger/lib/youtube.js");
         // Fetch Gaming (20) and Entertainment (24)
-        const textIds = await fetchTrendingChannelIds("24", 25);
-        const gameIds = await fetchTrendingChannelIds("20", 25);
+        const { ids: textIds } = await fetchTrendingChannelIds("24", 25);
+        const { ids: gameIds } = await fetchTrendingChannelIds("20", 25);
         const allIds = [...new Set([...textIds, ...gameIds])]; // Unique
 
         console.log(chalk.green(`✅ Found ${allIds.length} unique trending channels.`));
@@ -255,6 +282,12 @@ async function main() {
     const filterAnswer = await inquirer.prompt([
         {
             type: "number",
+            name: "targetCount",
+            message: chalk.cyan("🎯 Target Result Count (guaranteed analysis):"),
+            default: 100,
+        },
+        {
+            type: "number",
             name: "minSubscribers",
             message: chalk.cyan("📉 Min Subscribers (filter small channels):"),
             default: 1000,
@@ -270,6 +303,7 @@ async function main() {
     // Merge filters into payload
     triggerPayload = {
         ...triggerPayload,
+        targetCount: filterAnswer.targetCount,
         minSubscribers: filterAnswer.minSubscribers,
         minVideos: filterAnswer.minVideos,
     };
@@ -303,7 +337,7 @@ async function main() {
             pollSpinner.succeed(chalk.green("Task completed successfully!"));
 
             if (run.output && run.output.results) {
-                displayResults(run.output.results);
+                displayResults(run.output.results, run.output.summary);
             } else {
                 console.log(chalk.yellow("No results returned in output."));
                 console.log(run.output);

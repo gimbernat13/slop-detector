@@ -21,6 +21,11 @@ export const YouTubeChannelSchema = z.object({
         videoCount: z.string().transform(Number),
         hiddenSubscriberCount: z.boolean().optional(),
     }),
+    contentDetails: z.object({
+        relatedPlaylists: z.object({
+            uploads: z.string(),
+        }),
+    }).optional(),
 });
 
 export const YouTubeSearchResultSchema = z.object({
@@ -116,6 +121,8 @@ export const ClassificationResultSchema = z.object({
         ageInDays: z.number(),
         viewsPerSub: z.number(),
         videoCount: z.number(),
+        subscriberCount: z.number(),
+        viewCount: z.number(),
     }),
 
     // AI analysis (optional, only for AI method)

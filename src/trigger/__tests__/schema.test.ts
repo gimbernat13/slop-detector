@@ -4,7 +4,7 @@ import {
     NormalizedChannelSchema,
     ClassificationResultSchema,
     normalizeChannel,
-} from "../lib/schema";
+} from "../lib/schema.js";
 
 describe("YouTubeChannelSchema", () => {
     it("parses valid YouTube API response", () => {

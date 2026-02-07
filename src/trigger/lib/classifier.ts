@@ -1,27 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { NormalizedChannel, ClassificationResult } from "./schema";
+import type { NormalizedChannel, ClassificationResult } from "./schema.js";
 
 // ============================================================
 // Rate limiting helpers
 // ============================================================
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Global rate limiter: minimum 4 seconds between Gemini calls
-let lastCallTime = 0;
-const MIN_DELAY_MS = 4000; // 4 seconds between calls for free tier
-
-async function rateLimitedCall<T>(fn: () => Promise<T>): Promise<T> {
-    const now = Date.now();
-    const timeSinceLastCall = now - lastCallTime;
-
-    if (timeSinceLastCall < MIN_DELAY_MS) {
-        await sleep(MIN_DELAY_MS - timeSinceLastCall);
-    }
-
-    lastCallTime = Date.now();
-    return fn();
-}
 
 // Retry with exponential backoff
 async function retryWithBackoff<T>(
@@ -31,11 +15,14 @@ async function retryWithBackoff<T>(
 ): Promise<T> {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            return await rateLimitedCall(fn);
+            return await fn();
         } catch (error: any) {
             const isRateLimit = error?.status === 429 ||
+                error?.status === 503 ||
                 error?.message?.includes("429") ||
-                error?.message?.includes("quota");
+                error?.message?.includes("503") ||
+                error?.message?.includes("quota") ||
+                error?.message?.includes("overloaded");
 
             if (isRateLimit && attempt < maxRetries) {
                 const delay = baseDelay * Math.pow(2, attempt); // 2s, 4s, 8s
@@ -63,7 +50,10 @@ const genAI = getGeminiClient();
 
 export async function classifyChannel(channel: NormalizedChannel): Promise<ClassificationResult> {
     const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
-    const model = genAI.getGenerativeModel({ model: modelName });
+    const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: { responseMimeType: "application/json" }
+    });
 
     const prompt = `Analyze this YouTube channel and classify it for AI-generated slop/spam content.
 
@@ -109,20 +99,7 @@ Respond with ONLY valid JSON:
     try {
         const result = await retryWithBackoff(() => model.generateContent(prompt));
         const text = result.response.text();
-
-        // Parse JSON from response
-        // Clean up markdown code blocks if present
-        let cleanText = text.replace(/```json\n?|\n?```/g, "").trim();
-
-        // Find the first '{' and last '}' to handle any preamble/postamble
-        const firstBrace = cleanText.indexOf('{');
-        const lastBrace = cleanText.lastIndexOf('}');
-
-        if (firstBrace !== -1 && lastBrace !== -1) {
-            cleanText = cleanText.substring(firstBrace, lastBrace + 1);
-        }
-
-        const parsed = JSON.parse(cleanText);
+        const parsed = JSON.parse(text);
 
         return {
             channelId: channel.channelId,
@@ -137,6 +114,8 @@ Respond with ONLY valid JSON:
                 ageInDays: channel.ageInDays,
                 viewsPerSub: channel.viewsPerSub,
                 videoCount: channel.videoCount,
+                subscriberCount: channel.subscriberCount,
+                viewCount: channel.viewCount,
             },
             aiAnalysis: {
                 reasoning: parsed.reasoning,
@@ -162,6 +141,8 @@ Respond with ONLY valid JSON:
                 ageInDays: channel.ageInDays,
                 viewsPerSub: channel.viewsPerSub,
                 videoCount: channel.videoCount,
+                subscriberCount: channel.subscriberCount,
+                viewCount: channel.viewCount,
             },
             reasons: [`AI classification failed: ${error}`],
             recentVideos: channel.recentVideos,

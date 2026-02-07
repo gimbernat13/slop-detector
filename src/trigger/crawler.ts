@@ -1,6 +1,6 @@
 import { schedules, tasks } from "@trigger.dev/sdk/v3";
-import { SLOP_TOPICS, TRENDING_CATEGORIES } from "./lib/topics";
-import { fetchTrendingKeywords } from "./lib/youtube";
+import { SLOP_TOPICS, TRENDING_CATEGORIES } from "./lib/topics.js";
+import { fetchTrendingKeywords } from "./lib/youtube.js";
 
 // ============================================================
 // Hourly Crawler Task
