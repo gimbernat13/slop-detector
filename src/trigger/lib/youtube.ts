@@ -170,3 +170,34 @@ export async function searchChannelsByTopic(topic: string, maxResults = 50): Pro
 
     return Array.from(channelIds);
 }
+
+// ============================================================
+// Fetch Trending Keywords (Dynamic Discovery)
+// ============================================================
+
+export async function fetchTrendingKeywords(categoryId?: string, maxResults = 10): Promise<string[]> {
+    const url = new URL(`${YOUTUBE_API_BASE}/videos`);
+    url.searchParams.set("part", "snippet");
+    url.searchParams.set("chart", "mostPopular");
+    url.searchParams.set("regionCode", "US"); // Default to US trends
+    if (categoryId) {
+        url.searchParams.set("videoCategoryId", categoryId);
+    }
+    url.searchParams.set("maxResults", String(maxResults));
+    url.searchParams.set("key", getApiKey());
+
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+        throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const items = data.items || [];
+
+    // Extract titles and clean them up
+    // We want broad keywords, not specific video titles
+    // But for "Slop", the video titles ARE the keywords (e.g. "GTA 6 Trailer")
+    return items.map((item: { snippet?: { title?: string } }) =>
+        item.snippet?.title || ""
+    ).filter(t => t.length > 0);
+}
