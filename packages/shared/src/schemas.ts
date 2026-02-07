@@ -50,6 +50,9 @@ export const YouTubeVideoSchema = z.object({
         title: z.string(),
         publishedAt: z.string(),
     }),
+    status: z.object({
+        madeForKids: z.boolean().optional(),
+    }).optional(),
 });
 
 // ============================================================
@@ -83,6 +86,8 @@ export const NormalizedChannelSchema = z.object({
         publishedAt: z.string(),
         viewCount: z.string().optional(), // Optional since we might not always fetch it deep
     })),
+
+    isMadeForKids: z.boolean().default(false),
 });
 
 // ============================================================
@@ -134,6 +139,7 @@ export const ClassificationResultSchema = z.object({
         videoCount: z.number(),
         subscriberCount: z.number(),
         viewCount: z.number(),
+        isMadeForKids: z.boolean().optional(),
     }),
 
     // AI analysis (optional, only for AI method)

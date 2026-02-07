@@ -54,9 +54,6 @@ function getAI() {
     return _genAI;
 }
 
-// removed top-level initializer to avoid crashes during import/build
-
-
 // ============================================================
 // Rule-Based Classification
 // ============================================================
@@ -107,11 +104,25 @@ export function classifyByRules(channel: NormalizedChannel): ClassificationResul
         };
     }
 
-    // 2. OKAY RULES - REMOVED
-    // User feedback: Rules were too lenient.
-    // We will let the AI decide for "normal" looking channels to avoid false negatives.
-
-    // Only keeping obvious SLOP rules.
+    // Made for Kids = SLOP (Kids content farm/slop)
+    // User wants strict enforcement: If it is marked as made for kids, we tag it directly as SLOP.
+    if (channel.isMadeForKids) {
+        return {
+            channelId: channel.channelId,
+            title: channel.title,
+            description: channel.description,
+            thumbnailUrl: channel.thumbnailUrl,
+            classification: "SLOP",
+            confidence: 95,
+            slopScore: 90,
+            slopType: "kids_content",
+            method: "rule",
+            metrics: getMetrics(channel),
+            reasons: ["Channel is marked as 'Made for Kids' (Strict Exclusion Rule)"],
+            recentVideos: channel.recentVideos.map(v => v.title),
+            latestVideoId: channel.latestVideoId,
+        };
+    }
 
     return null; // No rule match -> Send to AI
 }
@@ -124,6 +135,7 @@ function getMetrics(channel: NormalizedChannel) {
         videoCount: channel.videoCount,
         subscriberCount: channel.subscriberCount,
         viewCount: channel.viewCount,
+        isMadeForKids: channel.isMadeForKids,
     };
 }
 
@@ -150,11 +162,12 @@ export async function classifyChannel(channel: NormalizedChannel): Promise<Class
 
 - Title: "${channel.title}"
 - Description: "${channel.description.slice(0, 500)}"
-- Recent Video Titles: ${channel.recentVideos.slice(0, 10).map(v => `"${v}"`).join(", ")}
+- Recent Video Titles: ${channel.recentVideos.slice(0, 10).map(v => `"${v.title}"`).join(", ")}
 
 METRICS:
 - Videos per day: ${channel.velocity.toFixed(2)}
 - Account age: ${channel.ageInDays} days
+- Made for Kids: ${channel.isMadeForKids ? "YES" : "NO"}
 - Total videos: ${channel.videoCount}
 - Subscribers: ${channel.subscriberCount.toLocaleString()}
 - Views per subscriber: ${channel.viewsPerSub.toFixed(2)}
@@ -162,17 +175,25 @@ METRICS:
 TASK: Determine if this is AI-generated spam/slop content (lofi streams, AI voice narration, algorithmic kids content farms, compilation spam, etc.)
 
 IMPORTANT GUIDELINES:
+1. **Quality over Format**: Even if a channel posts frequently or uses "hooks", look for High-Quality Indicators:
+    - **High Production Value**: Unique b-roll, face-on-camera, custom animations, or on-location filming.
+    - **Industry Reputation**: Is this a known reputable educator, tech reviewer, or journalist? (e.g. Jeff Geerling, Gamers Nexus, LTT).
+    - **Unique Insights**: Does the content offer deep analysis, personal experience, or unique perspectives?
+2. **Be Careful with "Templated Spam"**: 
+    - Reputable channels often use consistent branding, but SLOP/SPAM is characterized by lack of human personality, repetitive generic footage, and generic AI-written scripts.
+    - Do NOT label high-effort investigative or educational content as "templated_spam" just because they use a professional structure.
+3. **AI Voice**: AI narration alone is not slop if the content is high effort. Slop is "Wikipedia reading", "Reddit reading", or "Low effort compilations".
+4. **Conclusion**:
     - OKAY = Structured stories, educational value, consistent characters, high production value.
     - Mixed/Unsure = SUSPICIOUS using slop tactics.
-2. **AI Voice**: AI narration alone is not slop if the content is high effort. Slop is "Wikipedia reading", "Reddit reading", or "Low effort compilations".
-3. **Be STRICT**: If it looks like a content farm, it probably is. Lean towards SUSPICIOUS or SLOP if in doubt.
+    - SLOP = Evident low-effort, mass-produced, or purely algorithmic content.
 
 Respond with ONLY valid JSON:
 {
   "classification": "SLOP" | "SUSPICIOUS" | "OKAY",
   "confidence": 0-100,
   "slopType": "ai_music" | "kids_content" | "ai_voice" | "background_music" | "templated_spam" | null,
-  "reasoning": "brief explanation",
+  "reasoning": "brief explanation targeting specific slop signals or quality indicators seen",
   "nlpSignals": {
     "hasSpamKeywords": boolean,
     "templatedTitles": boolean,
@@ -184,7 +205,7 @@ Respond with ONLY valid JSON:
     "deadEngagement": boolean,
     "newOperation": boolean
   }
-}`;
+} `;
 
     try {
         const result = await retryWithBackoff(() => model.generateContent(prompt));
@@ -209,6 +230,7 @@ Respond with ONLY valid JSON:
                 videoCount: channel.videoCount,
                 subscriberCount: channel.subscriberCount,
                 viewCount: channel.viewCount,
+                isMadeForKids: channel.isMadeForKids,
             },
             aiAnalysis: {
                 reasoning: parsed.reasoning,
@@ -237,6 +259,7 @@ Respond with ONLY valid JSON:
                 videoCount: channel.videoCount,
                 subscriberCount: channel.subscriberCount,
                 viewCount: channel.viewCount,
+                isMadeForKids: channel.isMadeForKids,
             },
             reasons: [`AI classification failed: ${error}`],
             recentVideos: channel.recentVideos.map(v => v.title),

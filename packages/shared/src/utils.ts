@@ -5,7 +5,7 @@ import type { YouTubeChannel, NormalizedChannel } from "./types";
  */
 export function normalizeChannel(
     raw: YouTubeChannel,
-    recentVideos: { id: string; title: string; publishedAt: string }[], // Rich objects
+    recentVideos: { id: string; title: string; publishedAt: string; isMadeForKids?: boolean }[], // Rich objects
     latestVideoId?: string
 ): NormalizedChannel {
     const publishedAt = new Date(raw.snippet.publishedAt);
@@ -19,6 +19,9 @@ export function normalizeChannel(
     // Calculate Recent Velocity (last 14 days)
     const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000);
     const recentUploads = recentVideos.filter(v => new Date(v.publishedAt) > twoWeeksAgo);
+
+    // Determine if channel is made for kids based on recent video metadata
+    const isMadeForKids = recentVideos.some(v => v.isMadeForKids === true);
 
     // If we have less than 14 days of history/videos, we might under-calculate, 
     // but usually "velocity" implies density.
@@ -44,6 +47,11 @@ export function normalizeChannel(
         ageInDays,
         viewsPerSub: viewCount / subscriberCount,
 
-        recentVideos,
+        recentVideos: recentVideos.map(v => ({
+            id: v.id,
+            title: v.title,
+            publishedAt: v.publishedAt
+        })),
+        isMadeForKids
     };
 }

@@ -40,6 +40,7 @@ export const channels = pgTable('channels', {
     recentVideos: text('recent_videos').array(),
     latestVideoId: text('latest_video_id'),
     aiReasoning: text('ai_reasoning'),
+    isMadeForKids: boolean('is_made_for_kids').default(false),
 
     // Human review fields
     humanReviewStatus: text('human_review_status').default('pending'),

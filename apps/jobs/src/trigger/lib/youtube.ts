@@ -54,7 +54,7 @@ const PlaylistItemSchema = z.object({
     }),
 });
 
-export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 10): Promise<{ id: string, title: string, publishedAt: string }[]> {
+export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 10): Promise<{ id: string, title: string, publishedAt: string, isMadeForKids?: boolean }[]> {
     if (!uploadsPlaylistId) return [];
 
     const url = new URL(`${YOUTUBE_API_BASE}/playlistItems`);
@@ -72,8 +72,8 @@ export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 
     const data = await response.json() as any;
     const items = data.items || [];
 
-    // Extract video data
-    return items.map((item: unknown) => {
+    // Extract basic video data
+    const basicVideos = items.map((item: unknown) => {
         try {
             const parsed = PlaylistItemSchema.parse(item);
             return {
@@ -82,9 +82,41 @@ export async function fetchRecentVideos(uploadsPlaylistId: string, maxResults = 
                 publishedAt: parsed.snippet.publishedAt,
             };
         } catch {
-            return { id: "", title: "Untitled", publishedAt: "" }; // Filtered out later
+            return null;
         }
-    }).filter((v: { id: string; title: string, publishedAt: string }) => v.id !== "");
+    }).filter((v: any): v is { id: string, title: string, publishedAt: string } => v !== null && v.id !== "");
+
+    if (basicVideos.length === 0) return [];
+
+    // ENRICHMENT: Fetch "madeForKids" status from videos.list
+    const videoIds = basicVideos.map(v => v.id).join(",");
+    const statusUrl = new URL(`${YOUTUBE_API_BASE}/videos`);
+    statusUrl.searchParams.set("part", "status");
+    statusUrl.searchParams.set("id", videoIds);
+    statusUrl.searchParams.set("key", getApiKey());
+
+    try {
+        const sResponse = await fetch(statusUrl.toString());
+        if (sResponse.ok) {
+            const sData = await sResponse.json() as any;
+            const statusMap = new Map<string, boolean>();
+
+            for (const vItem of (sData.items || [])) {
+                if (vItem.id && vItem.status) {
+                    statusMap.set(vItem.id, !!vItem.status.madeForKids);
+                }
+            }
+
+            return basicVideos.map(v => ({
+                ...v,
+                isMadeForKids: statusMap.get(v.id) ?? false
+            }));
+        }
+    } catch (e) {
+        console.warn("Failed to fetch video statuses:", e);
+    }
+
+    return basicVideos;
 }
 
 // ============================================================

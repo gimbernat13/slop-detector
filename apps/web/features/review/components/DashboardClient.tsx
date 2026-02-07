@@ -19,8 +19,34 @@ interface DashboardClientProps {
 
 export function DashboardClient({ channels, counts }: DashboardClientProps) {
     const [filter, setFilter] = useState<Classification | "all">("all");
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Channel; direction: "asc" | "desc" }>({
+        key: "createdAt",
+        direction: "desc",
+    });
 
-    const filteredChannels = channels.filter((channel) => {
+    const handleSort = (key: keyof Channel) => {
+        setSortConfig((prev) => ({
+            key,
+            direction: prev.key === key && prev.direction === "desc" ? "asc" : "desc",
+        }));
+    };
+
+    const sortedChannels = [...channels].sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (aValue === bValue) return 0;
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        if (sortConfig.direction === "asc") {
+            return aValue < bValue ? -1 : 1;
+        } else {
+            return aValue > bValue ? -1 : 1;
+        }
+    });
+
+    const filteredChannels = sortedChannels.filter((channel) => {
         if (filter === "all") return true;
         return channel.classification === filter;
     });
@@ -36,7 +62,11 @@ export function DashboardClient({ channels, counts }: DashboardClientProps) {
                 />
             </CardHeader>
             <CardContent>
-                <ChannelTable channels={filteredChannels} />
+                <ChannelTable
+                    channels={filteredChannels}
+                    onSort={handleSort}
+                    sortConfig={sortConfig}
+                />
             </CardContent>
         </Card>
     );
