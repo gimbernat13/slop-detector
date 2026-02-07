@@ -105,6 +105,8 @@ Respond with ONLY valid JSON:
         return {
             channelId: channel.channelId,
             title: channel.title,
+            description: channel.description,
+            thumbnailUrl: channel.thumbnailUrl,
             classification: parsed.classification,
             confidence: parsed.confidence,
             slopScore: parsed.classification === "SLOP" ? 80 : parsed.classification === "SUSPICIOUS" ? 50 : 20,

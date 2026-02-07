@@ -13,6 +13,8 @@ export async function insertClassification(result: ClassificationResult) {
     await db.insert(channels).values({
         channelId: result.channelId,
         title: result.title,
+        description: result.description,
+        thumbnailUrl: result.thumbnailUrl,
         classification: result.classification,
         slopScore: result.slopScore,
         confidence: result.confidence,

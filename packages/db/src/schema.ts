@@ -15,6 +15,7 @@ export const channels = pgTable('channels', {
     channelId: text('channel_id').notNull().unique(),
     title: text('title').notNull(),
     description: text('description'),
+    thumbnailUrl: text('thumbnail_url'),
 
     // Classification
     classification: text('classification').notNull(),

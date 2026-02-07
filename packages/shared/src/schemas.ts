@@ -107,6 +107,8 @@ export const BehaviorSignalsSchema = z.object({
 export const ClassificationResultSchema = z.object({
     channelId: z.string(),
     title: z.string(),
+    description: z.string().optional(),
+    thumbnailUrl: z.string().optional(),
 
     // Classification
     classification: ClassificationSchema,
