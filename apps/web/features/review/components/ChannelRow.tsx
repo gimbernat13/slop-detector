@@ -59,17 +59,26 @@ export function ChannelRow({ channel }: ChannelRowProps) {
                 </TableCell>
 
                 <TableCell>
-                    <span
-                        className={
-                            channel.slopScore && channel.slopScore >= 70
-                                ? "text-red-500 font-semibold"
-                                : channel.slopScore && channel.slopScore >= 40
-                                    ? "text-yellow-500"
-                                    : "text-green-500"
-                        }
-                    >
-                        {channel.slopScore ?? "—"}
-                    </span>
+                    {channel.slopScore !== null ? (
+                        <div className="flex items-center gap-2" title={`Score: ${channel.slopScore}`}>
+                            <div className="h-2 w-16 bg-secondary rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full ${channel.slopScore >= 70
+                                        ? "bg-red-500"
+                                        : channel.slopScore >= 40
+                                            ? "bg-yellow-500"
+                                            : "bg-green-500"
+                                        }`}
+                                    style={{ width: `${Math.min(channel.slopScore, 100)}%` }}
+                                />
+                            </div>
+                            <span className="text-xs text-muted-foreground w-6 text-right">
+                                {channel.slopScore}
+                            </span>
+                        </div>
+                    ) : (
+                        "—"
+                    )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                     {channel.slopType ?? "—"}

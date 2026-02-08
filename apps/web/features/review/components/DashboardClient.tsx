@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import type { Channel } from "@slop-detector/db";
+import { useState, useEffect } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChannelTable } from "./ChannelTable";
-import { ChannelTabs } from "./ChannelTabs";
+import type { Channel } from "@slop-detector/db";
 import type { Classification } from "@slop-detector/shared";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInView } from "react-intersection-observer";
+import { fetchMoreChannels } from "@/app/actions";
 
 interface DashboardClientProps {
-    channels: Channel[];
+    initialChannels: Channel[];
     counts: {
         all: number;
         slop: number;
@@ -17,8 +19,41 @@ interface DashboardClientProps {
     };
 }
 
-export function DashboardClient({ channels, counts }: DashboardClientProps) {
-    const [filter, setFilter] = useState<Classification | "all">("all");
+export function DashboardClient({ initialChannels, counts }: DashboardClientProps) {
+    const [activeTab, setActiveTab] = useState<"all" | Classification>("all");
+    const { ref, inView } = useInView();
+
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useInfiniteQuery({
+        queryKey: ["channels", activeTab],
+        queryFn: async ({ pageParam = 0 }) => {
+            const filter = activeTab === "all" ? undefined : activeTab;
+            return fetchMoreChannels(filter, 20, pageParam);
+        },
+        initialPageParam: 0,
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        initialData: () => {
+            if (activeTab === 'all') {
+                return {
+                    pages: [{ items: initialChannels, nextCursor: initialChannels.length === 20 ? 20 : undefined }],
+                    pageParams: [0]
+                }
+            }
+            return undefined;
+        }
+    });
+
+    useEffect(() => {
+        if (inView && hasNextPage) {
+            fetchNextPage();
+        }
+    }, [inView, hasNextPage, fetchNextPage]);
+
+    // Client-side sort for loaded items
     const [sortConfig, setSortConfig] = useState<{ key: keyof Channel; direction: "asc" | "desc" }>({
         key: "createdAt",
         direction: "desc",
@@ -31,7 +66,10 @@ export function DashboardClient({ channels, counts }: DashboardClientProps) {
         }));
     };
 
-    const sortedChannels = [...channels].sort((a, b) => {
+    const allChannels = data?.pages.flatMap((page) => page.items) || [];
+
+    // Apply sort to the flattened list
+    const sortedChannels = [...allChannels].sort((a, b) => {
         const aValue = a[sortConfig.key];
         const bValue = b[sortConfig.key];
 
@@ -46,28 +84,33 @@ export function DashboardClient({ channels, counts }: DashboardClientProps) {
         }
     });
 
-    const filteredChannels = sortedChannels.filter((channel) => {
-        if (filter === "all") return true;
-        return channel.classification === filter;
-    });
-
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg">Channels for Review</CardTitle>
-                <ChannelTabs
-                    counts={counts}
-                    currentFilter={filter}
-                    onFilterChange={setFilter}
-                />
-            </CardHeader>
-            <CardContent>
-                <ChannelTable
-                    channels={filteredChannels}
-                    onSort={handleSort}
-                    sortConfig={sortConfig}
-                />
-            </CardContent>
-        </Card>
+        <div className="space-y-4">
+            <Tabs
+                defaultValue="all"
+                className="w-full"
+                onValueChange={(v) => setActiveTab(v as "all" | Classification)}
+            >
+                <TabsList>
+                    <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
+                    <TabsTrigger value="SLOP">Slop ({counts.slop})</TabsTrigger>
+                    <TabsTrigger value="SUSPICIOUS">Suspicious ({counts.suspicious})</TabsTrigger>
+                    <TabsTrigger value="OKAY">Okay ({counts.okay})</TabsTrigger>
+                </TabsList>
+
+                <div className="mt-4">
+                    <ChannelTable
+                        channels={sortedChannels}
+                        onSort={handleSort}
+                        sortConfig={sortConfig}
+                    />
+
+                    {/* Infinite Scroll Trigger & Loader */}
+                    <div ref={ref} className="py-4 text-center text-muted-foreground h-10">
+                        {isFetchingNextPage ? "Loading more..." : hasNextPage ? "Load more" : "No more channels"}
+                    </div>
+                </div>
+            </Tabs>
+        </div>
     );
 }

@@ -9,33 +9,42 @@ import { revalidatePath } from "next/cache";
 // Fetch Channels
 // ============================================================
 
-export async function getChannels(filter?: Classification): Promise<Channel[]> {
+// Pagination Response
+export type PaginatedChannels = {
+    items: Channel[];
+    nextCursor?: number;
+};
+
+export async function getChannels(filter?: Classification, limit = 20, cursor = 0): Promise<PaginatedChannels> {
     const db = getDb();
-    // Pagination Response
-    export type PaginatedChannels = {
-        items: Channel[];
-        nextCursor?: number;
-    };
 
     if (filter) {
-        return await db
+        const items = await db
             .select()
             .from(channels)
             .where(eq(channels.classification, filter))
             .orderBy(desc(channels.createdAt))
-            .limit(100);
+            .limit(limit)
+            .offset(cursor);
+
+        const nextCursor = items.length === limit ? cursor + limit : undefined;
+        return { items, nextCursor };
     }
 
-    // Balanced fetch for Dashboard (50 of each to ensure all tabs have data)
-    const [slop, suspicious, okay] = await Promise.all([
-        db.select().from(channels).where(eq(channels.classification, "SLOP")).orderBy(desc(channels.createdAt)).limit(50),
-        db.select().from(channels).where(eq(channels.classification, "SUSPICIOUS")).orderBy(desc(channels.createdAt)).limit(50),
-        db.select().from(channels).where(eq(channels.classification, "OKAY")).orderBy(desc(channels.createdAt)).limit(50),
-    ]);
+    // Balanced fetch is tricky with cursor pagination without complex logic.
+    // For now, let's just fetch ALL if no filter is provided, ordered by date.
+    // This simplifies the infinite scroll significantly.
+    // If we need balanced, we'd need separate cursors for each category.
 
-    // Combine and sort by date
-    const combined = [...slop, ...suspicious, ...okay];
-    return combined.sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
+    const items = await db
+        .select()
+        .from(channels)
+        .orderBy(desc(channels.createdAt))
+        .limit(limit)
+        .offset(cursor);
+
+    const nextCursor = items.length === limit ? cursor + limit : undefined;
+    return { items, nextCursor };
 }
 
 // ============================================================
