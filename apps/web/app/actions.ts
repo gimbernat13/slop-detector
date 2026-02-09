@@ -68,7 +68,7 @@ export async function getActiveTaskCount() {
         const list = await runs.list({
             taskIdentifier: "ingest.channel",
             status: ["EXECUTING", "QUEUED", "DELAYED"],
-            limit: 1,
+            limit: 50,
         });
         return list.data.length;
     } catch (error) {

@@ -38,6 +38,7 @@ export function IngestModal() {
             // Invalidate queries to trigger refresh
             queryClient.invalidateQueries({ queryKey: ["channels"] });
             queryClient.invalidateQueries({ queryKey: ["stats"] });
+            queryClient.invalidateQueries({ queryKey: ["activeTasks"] });
 
             // Close modal after short delay
             const timer = setTimeout(() => {
