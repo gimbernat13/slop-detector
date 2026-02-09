@@ -72,5 +72,5 @@
 
 2. **Run this single command** from your local terminal:
    ```bash
-   ssh root@72.62.168.224 "cd slop-detector && git pull origin main && docker-compose up -d --build"
+   ssh -A user@72.62.168.224 "cd slop-detector && git pull origin main && docker-compose up -d --build"
    ```

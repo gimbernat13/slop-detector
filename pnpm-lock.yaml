@@ -96,6 +96,9 @@ importers:
       '@trigger.dev/react-hooks':
         specifier: ^4.3.3
         version: 4.3.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+      '@trigger.dev/sdk':
+        specifier: 4.3.3
+        version: 4.3.3(typescript@5.9.3)(zod@3.25.76)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
