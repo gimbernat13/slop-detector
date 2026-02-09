@@ -31,3 +31,4 @@ pnpm-debug.log*
 dist
 build
 coverage
+SPEC.md
