@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/select";
 import { useChannelMutations } from "../hooks/useChannelMutations";
 
+interface ReviewActionsProps {
+    channelId: string;
+    currentStatus: string;
+}
+
 export function ReviewActions({ channelId, currentStatus }: ReviewActionsProps) {
     const { confirm, override, flag } = useChannelMutations();
     const [showOverride, setShowOverride] = useState(false);
