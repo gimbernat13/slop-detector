@@ -29,6 +29,12 @@
    cd slop-detector
    ```
 
+   **Option C: Generate Key on VPS (If Agent Forwarding fails)**
+   1. Run `ssh-keygen -t ed25519 -C "vps-deploy"` (Press Enter for all).
+   2. Run `cat ~/.ssh/id_ed25519.pub`.
+   3. Copy the output and add it to [Deploy Keys](https://github.com/gimbernat13/slop-detector/settings/keys).
+   4. Run `git clone git@github.com:gimbernat13/slop-detector.git`.
+
 2. **Create/Update `.env` file**:
    Ensure you have a `.env` file in the root directory with the necessary environment variables.
    ```bash
