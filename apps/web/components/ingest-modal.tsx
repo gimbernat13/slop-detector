@@ -35,14 +35,14 @@ export function IngestModal() {
         if (state.success && state.runId) {
             toast.success("Discovery job started!");
 
-            // Invalidate queries to trigger refresh
-            queryClient.invalidateQueries({ queryKey: ["channels"] });
-            queryClient.invalidateQueries({ queryKey: ["stats"] });
-            queryClient.invalidateQueries({ queryKey: ["activeTasks"] });
-
             // Close modal after short delay
             const timer = setTimeout(() => {
                 setOpen(false);
+                // Invalidate queries to trigger refresh after modal starts closing
+                // This also gives Trigger.dev a moment to reflect the new run in the list API
+                queryClient.invalidateQueries({ queryKey: ["channels"] });
+                queryClient.invalidateQueries({ queryKey: ["stats"] });
+                queryClient.invalidateQueries({ queryKey: ["activeTasks"] });
             }, 1000);
             return () => clearTimeout(timer);
         }
