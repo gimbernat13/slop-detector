@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Slop Detector | Human Review Dashboard",
-  description: "AI-Powered YouTube Spam Channel Detection - Human Review Interface",
+  title: "Diego's Youtube Slop Detector | Human Review Dashboard",
+  description: "YouTube Spam Channel Detection - Human Review Interface",
 };
 
 import { Providers } from "./providers";
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

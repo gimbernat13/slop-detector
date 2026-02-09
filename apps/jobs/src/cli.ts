@@ -232,54 +232,20 @@ async function main() {
 
     if (modeAnswer.mode === "trending") {
         console.log(chalk.yellow("🌊 Fetching Top Trending Channels + Infinite Topics..."));
-        const { fetchTrendingChannelIds } = await import("./trigger/lib/youtube.js");
+        const { getTrendingSeeds } = await import("@slop-detector/shared");
 
-        // Fetch Gaming (20), Entertainment (24), Film (1), People (22), Tech (28)
-        // With Pagination (Depth = 100 per category)
-        const fetchDeep = async (cat: string) => {
-            const page1 = await fetchTrendingChannelIds(cat, 50);
-            let ids = page1.ids;
-            if (page1.nextPageToken) {
-                try {
-                    const page2 = await fetchTrendingChannelIds(cat, 50, page1.nextPageToken);
-                    ids = [...ids, ...page2.ids];
-                } catch (e) { }
-            }
-            return ids;
-        };
+        if (!process.env.YOUTUBE_API_KEY) {
+            throw new Error("YOUTUBE_API_KEY is missing in environment variables.");
+        }
 
-        const [gaming, entertainment, film, people, tech] = await Promise.all([
-            fetchDeep("20"),
-            fetchDeep("24"),
-            fetchDeep("1"),
-            fetchDeep("22"),
-            fetchDeep("28")
-        ]);
+        const seeds = await getTrendingSeeds(process.env.YOUTUBE_API_KEY);
 
-        const trendingIds = new Set([
-            ...gaming, ...entertainment, ...film, ...people, ...tech
-        ]);
+        console.log(chalk.magenta(`🎲 Mixing in random topics: ${seeds.keywords.join(", ")}`));
+        console.log(chalk.green(`✅ Found ${seeds.seedChannelIds.length} unique trending channels + ${seeds.keywords.length} topics.`));
 
-        // Add Random "Infinite" Topics
-        const SLOP_TOPICS = [
-            "minecraft but", "skibidi toilet", "asmr eating", "crypto news",
-            "fortnite glitch", "roblox story", "gta 6 leak", "ai tools",
-            "lofi hip hop 24/7", "meditation music", "satisfying slime",
-            "life hacks", "prank", "reaction", "mr beast clone",
-            "ai political news", "election leaks", "government secrets revealed",
-            "breaking political news", "political drama",
-            "finger family nursery rhymes", "bad baby", "toy play videos",
-            "satisfying asmr compilation", "hydraulic press compilation",
-            "chatgpt money glitch", "passive income ai", "ai breaking news 24/7",
-            "shorts funny animals", "unusual memes", "trending challenges"
-        ];
-        const randomTopics = SLOP_TOPICS.sort(() => 0.5 - Math.random()).slice(0, 3);
-        console.log(chalk.magenta(`🎲 Mixing in random topics: ${randomTopics.join(", ")}`));
-
-        console.log(chalk.green(`✅ Found ${trendingIds.size} unique trending channels + 3 topics.`));
         triggerPayload = {
-            seedChannelIds: Array.from(trendingIds),
-            keywords: randomTopics,
+            seedChannelIds: seeds.seedChannelIds,
+            keywords: seeds.keywords,
             targetCount: 150, // Higher target for manual infinite run
         };
 

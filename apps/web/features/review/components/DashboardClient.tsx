@@ -44,7 +44,8 @@ export function DashboardClient({ initialChannels, counts }: DashboardClientProp
                 }
             }
             return undefined;
-        }
+        },
+        refetchInterval: 30000, // Poll every 30s for general updates
     });
 
     useEffect(() => {
@@ -66,7 +67,16 @@ export function DashboardClient({ initialChannels, counts }: DashboardClientProp
         }));
     };
 
-    const allChannels = data?.pages.flatMap((page) => page.items) || [];
+    const allChannelsRaw = data?.pages.flatMap((page) => page.items) || [];
+
+    // Deduplicate by channelId (or id) to prevent crashes from pagination shifts
+    const uniqueChannelsMap = new Map();
+    allChannelsRaw.forEach(c => {
+        if (!uniqueChannelsMap.has(c.channelId)) {
+            uniqueChannelsMap.set(c.channelId, c);
+        }
+    });
+    const allChannels = Array.from(uniqueChannelsMap.values());
 
     // Apply sort to the flattened list
     const sortedChannels = [...allChannels].sort((a, b) => {

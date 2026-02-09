@@ -28,3 +28,4 @@ export type {
 
 // Utility exports
 export { normalizeChannel } from "./utils";
+export { getTrendingSeeds, SLOP_TOPICS } from "./trend-surfer";

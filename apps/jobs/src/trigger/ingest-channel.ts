@@ -1,7 +1,7 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { fetchChannelMetadata, fetchRecentVideos } from "./lib/youtube.js";
 import { normalizeChannel } from "@slop-detector/shared";
-import { classifyChannel, classifyByRules } from "./lib/classifier.js";
+import { classifyChannel } from "./lib/classifier.js";
 import { insertClassification } from "./lib/db.js";
 
 // ============================================================
@@ -67,6 +67,9 @@ export const ingestChannel = task({
         // Load DB module once
         const { getExistingChannelIds, insertClassification } = await import("./lib/db.js");
         const { fetchChannelMetadata, searchChannelsByTopic, fetchRecentVideos, fetchTrendingChannelIds } = await import("./lib/youtube.js");
+
+        // --- TREND SURFING LOGIC ---
+
 
         let loopCount = 0;
 

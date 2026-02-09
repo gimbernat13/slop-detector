@@ -1,6 +1,9 @@
+import { Youtube } from "lucide-react";
 import { getChannels, getStats, StatsDonut } from "@/features/review";
 import { DashboardClient } from "@/features/review/components/DashboardClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { IngestModal } from "@/components/ingest-modal";
+import { TaskStatus } from "@/components/task-status";
 
 export const dynamic = "force-dynamic";
 
@@ -26,26 +29,35 @@ export default async function DashboardPage() {
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10 w-full">
         <div className="w-full px-6 py-4 lg:px-12">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                🔍 Slop Detector
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                AI-Powered YouTube Spam Channel Detection
-              </p>
+            <div className="flex items-center gap-3">
+              <Youtube className="w-8 h-8 text-red-600" />
+              <div>
+                <h1 className="text-2xl font-bold">
+                  Diego's Youtube Slop Detector
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  YouTube Spam Channel Detection
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-red-500 rounded-full" />
-                <span>{stats.slop} Slop</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-yellow-500 rounded-full" />
-                <span>{stats.suspicious} Suspicious</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full" />
-                <span>{stats.okay} Okay</span>
+
+            <div className="flex items-center gap-6">
+              <TaskStatus />
+              <IngestModal />
+
+              <div className="flex items-center gap-4 text-sm border-l pl-6">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-red-500 rounded-full" />
+                  <span>{stats.slop} Slop</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full" />
+                  <span>{stats.suspicious} Suspicious</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span>{stats.okay} Okay</span>
+                </div>
               </div>
             </div>
           </div>

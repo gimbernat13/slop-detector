@@ -30,12 +30,16 @@ export function ChannelRow({ channel }: ChannelRowProps) {
             >
                 <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
-                        {channel.thumbnailUrl && (
+                        {channel.thumbnailUrl ? (
                             <img
                                 src={channel.thumbnailUrl}
                                 alt={channel.title}
                                 className="w-8 h-8 rounded-full object-cover"
                             />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0 border border-border">
+                                {channel.title.charAt(0).toUpperCase()}
+                            </div>
                         )}
                         <a
                             href={`https://youtube.com/channel/${channel.channelId}`}
