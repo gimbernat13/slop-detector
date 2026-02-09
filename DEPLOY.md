@@ -48,7 +48,7 @@
    ```
 
 4. **Verify**:
-   Access the application at `http://<your-vps-ip>:3000`.
+   Access the application at `http://<your-vps-ip>:3001`.
 
 ## Troubleshooting
 
