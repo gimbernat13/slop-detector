@@ -103,12 +103,11 @@ export function DashboardClient({ initialChannels, counts }: DashboardClientProp
                         channels={sortedChannels}
                         onSort={handleSort}
                         sortConfig={sortConfig}
+                        isLoadingMore={isFetchingNextPage}
                     />
 
-                    {/* Infinite Scroll Trigger & Loader */}
-                    <div ref={ref} className="py-4 text-center text-muted-foreground h-10">
-                        {isFetchingNextPage ? "Loading more..." : hasNextPage ? "Load more" : "No more channels"}
-                    </div>
+                    {/* Infinite Scroll Trigger */}
+                    <div ref={ref} className="h-4" />
                 </div>
             </Tabs>
         </div>

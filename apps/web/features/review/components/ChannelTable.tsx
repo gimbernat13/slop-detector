@@ -14,6 +14,7 @@ interface ChannelTableProps {
     channels: Channel[];
     onSort: (key: keyof Channel) => void;
     sortConfig: { key: keyof Channel; direction: "asc" | "desc" };
+    isLoadingMore?: boolean;
 }
 
 function SortIcon({ active, direction }: { active: boolean; direction: "asc" | "desc" }) {
@@ -21,8 +22,10 @@ function SortIcon({ active, direction }: { active: boolean; direction: "asc" | "
     return direction === "asc" ? <span className="ml-1 text-xs">↑</span> : <span className="ml-1 text-xs">↓</span>;
 }
 
-export function ChannelTable({ channels, onSort, sortConfig }: ChannelTableProps) {
-    if (channels.length === 0) {
+import { ChannelRowSkeleton } from "./ChannelRowSkeleton";
+
+export function ChannelTable({ channels, onSort, sortConfig, isLoadingMore }: ChannelTableProps) {
+    if (channels.length === 0 && !isLoadingMore) {
         return (
             <div className="text-center py-12 text-muted-foreground">
                 No channels found. Run the ingestion pipeline to start analyzing.
@@ -33,7 +36,7 @@ export function ChannelTable({ channels, onSort, sortConfig }: ChannelTableProps
     return (
         <div className="rounded-md border">
             <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
                     <TableRow>
                         <TableHead className="cursor-pointer select-none" onClick={() => onSort("title")}>
                             Channel <SortIcon active={sortConfig.key === "title"} direction={sortConfig.direction} />
@@ -60,6 +63,13 @@ export function ChannelTable({ channels, onSort, sortConfig }: ChannelTableProps
                     {channels.map((channel) => (
                         <ChannelRow key={channel.id} channel={channel} />
                     ))}
+                    {isLoadingMore && (
+                        <>
+                            <ChannelRowSkeleton />
+                            <ChannelRowSkeleton />
+                            <ChannelRowSkeleton />
+                        </>
+                    )}
                 </TableBody>
             </Table>
         </div>

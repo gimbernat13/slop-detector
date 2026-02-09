@@ -10,64 +10,30 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    confirmChannel,
-    overrideChannel,
-    flagChannel,
-} from "../services/channels";
-
-interface ReviewActionsProps {
-    channelId: string;
-    currentStatus: string | null;
-}
+import { useChannelMutations } from "../hooks/useChannelMutations";
 
 export function ReviewActions({ channelId, currentStatus }: ReviewActionsProps) {
-    const [isPending, startTransition] = useTransition();
+    const { confirm, override, flag } = useChannelMutations();
     const [showOverride, setShowOverride] = useState(false);
     const [showFlag, setShowFlag] = useState(false);
     const [flagReason, setFlagReason] = useState("");
 
+    const isPending = confirm.isPending || override.isPending || flag.isPending;
+
     const handleConfirm = () => {
-        toast.promise(
-            async () => {
-                await confirmChannel(channelId);
-            },
-            {
-                loading: "Confirming...",
-                success: "Channel confirmed",
-                error: "Failed to confirm channel",
-            }
-        );
+        confirm.mutate(channelId);
     };
 
     const handleOverride = (newClassification: string) => {
-        toast.promise(
-            async () => {
-                await overrideChannel(channelId, newClassification as "SLOP" | "SUSPICIOUS" | "OKAY");
-                setShowOverride(false);
-            },
-            {
-                loading: "Updating classification...",
-                success: "Classification updated",
-                error: "Failed to update classification",
-            }
-        );
+        override.mutate({ channelId, newClassification: newClassification as any });
+        setShowOverride(false);
     };
 
     const handleFlag = () => {
         if (!flagReason.trim()) return;
-        toast.promise(
-            async () => {
-                await flagChannel(channelId, flagReason);
-                setShowFlag(false);
-                setFlagReason("");
-            },
-            {
-                loading: "Flagging channel...",
-                success: "Channel flagged",
-                error: "Failed to flag channel",
-            }
-        );
+        flag.mutate({ channelId, reason: flagReason });
+        setShowFlag(false);
+        setFlagReason("");
     };
 
     if (currentStatus === "confirmed" || currentStatus === "overridden") {
