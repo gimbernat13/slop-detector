@@ -61,3 +61,16 @@
   ```bash
   docker-compose build --no-cache
   ```
+
+## Updating
+1. **Push your changes** to GitHub locally:
+   ```bash
+   git add .
+   git commit -m "your message"
+   git push origin main
+   ```
+
+2. **Run this single command** from your local terminal:
+   ```bash
+   ssh root@72.62.168.224 "cd slop-detector && git pull origin main && docker-compose up -d --build"
+   ```
