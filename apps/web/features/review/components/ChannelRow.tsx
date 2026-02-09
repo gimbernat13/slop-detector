@@ -92,7 +92,7 @@ export function ChannelRow({ channel }: ChannelRowProps) {
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <ReviewActions
                         channelId={channel.channelId}
-                        currentStatus={channel.humanReviewStatus}
+                        currentStatus={channel.humanReviewStatus ?? "pending"}
                     />
                 </TableCell>
             </TableRow>

@@ -13,6 +13,7 @@ export function normalizeChannel(
         tags?: string[];
         duration?: string;
         viewCount?: string;
+        categoryId?: string;
     }[], // Rich objects
     latestVideoId?: string
 ): NormalizedChannel {
