@@ -3,9 +3,21 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
     restart: always
     ports:
       - "3001:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    restart: always
     env_file:
       - .env
     environment:

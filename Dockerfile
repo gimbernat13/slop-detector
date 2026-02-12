@@ -5,7 +5,7 @@ FROM base AS prune
 WORKDIR /app
 RUN npm install -g turbo
 COPY . .
-RUN turbo prune @slop-detector/web --docker
+RUN turbo prune @slop-detector/web @slop-detector/jobs --docker
 
 # 2. Install dependencies and build
 FROM base AS builder
@@ -21,7 +21,7 @@ COPY --from=prune /app/out/full/ .
 COPY turbo.json turbo.json
 
 # Build the project
-RUN pnpm turbo build --filter=@slop-detector/web...
+RUN pnpm turbo build --filter=@slop-detector/web... --filter=@slop-detector/jobs...
 
 # 3. Production runner
 FROM base AS runner
@@ -44,3 +44,9 @@ USER nextjs
 EXPOSE 3000
 
 CMD ["node", "apps/web/server.js"]
+
+# 4. Worker runner
+FROM builder AS worker
+WORKDIR /app
+# No build step needed for dev mode worker, source is already there
+CMD ["pnpm", "--filter", "@slop-detector/jobs", "dev"]
